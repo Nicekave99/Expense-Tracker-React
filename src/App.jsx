@@ -1,4 +1,4 @@
-// App.jsx - Final Updated Version
+// App.jsx - Fixed React Hooks Issues
 import React, { useState, useEffect } from "react";
 
 // Import Components
@@ -12,23 +12,83 @@ import AddTransaction from "./pages/AddTransaction";
 import TransactionList from "./pages/TransactionList";
 import Report from "./pages/Report";
 
+// Import Auth Components
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import AuthPage from "./pages/AuthPage";
+
 // Import Custom Hooks and Utils
 import { useTransactions } from "./hooks/useFirestore";
 import { formatThaiDate, getRelativeTime } from "./utils/dateUtils";
 
-const App = () => {
+// Profile Page Component (ชั่วคราว จนกว่าจะสร้างไฟล์แยก)
+const ProfilePage = ({ theme, language }) => {
+  return (
+    <div
+      className={`p-6 ${theme === "dark" ? "text-gray-100" : "text-gray-900"}`}
+    >
+      <h1 className="text-4xl font-bold bg-gradient-to-r from-red-600 to-red-400 bg-clip-text text-transparent mb-6">
+        {language === "th" ? "โปรไฟล์ผู้ใช้" : "User Profile"}
+      </h1>
+      <div
+        className={`${
+          theme === "dark" ? "bg-gray-800/80" : "bg-white/80"
+        } backdrop-blur-sm rounded-2xl p-8 shadow-lg border ${
+          theme === "dark" ? "border-gray-700/50" : "border-white/20"
+        }`}
+      >
+        <p
+          className={`text-center ${
+            theme === "dark" ? "text-gray-400" : "text-gray-600"
+          }`}
+        >
+          {language === "th"
+            ? "หน้าโปรไฟล์กำลังพัฒนา..."
+            : "Profile page is under development..."}
+        </p>
+      </div>
+    </div>
+  );
+};
+
+// Main App Component (ใช้ useAuth ได้แล้วเพราะอยู่ใน AuthProvider)
+const AppContent = () => {
+  // Auth states from context
+  const {
+    currentUser,
+    userProfile,
+    loading: authLoading,
+    updateUserProfile,
+  } = useAuth();
+
   // Main States
   const [currentPage, setCurrentPage] = useState("dashboard");
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [notification, setNotification] = useState(null);
 
-  // Theme and Language States
-  const [theme, setTheme] = useState(() => {
-    return localStorage.getItem("expense-tracker-theme") || "light";
+  // Theme and Language States (ใช้ localStorage เป็น fallback)
+  const [localTheme, setLocalTheme] = useState(() => {
+    return (
+      userProfile?.preferences?.theme ||
+      localStorage.getItem("expense-tracker-theme") ||
+      "light"
+    );
   });
-  const [language, setLanguage] = useState(() => {
-    return localStorage.getItem("expense-tracker-language") || "th";
+
+  const [localLanguage, setLocalLanguage] = useState(() => {
+    return (
+      userProfile?.preferences?.language ||
+      localStorage.getItem("expense-tracker-language") ||
+      "th"
+    );
   });
+
+  // Update local states when user profile changes
+  useEffect(() => {
+    if (userProfile?.preferences) {
+      setLocalTheme(userProfile.preferences.theme || "light");
+      setLocalLanguage(userProfile.preferences.language || "th");
+    }
+  }, [userProfile]);
 
   // Use custom hook for transactions
   const {
@@ -42,29 +102,61 @@ const App = () => {
   } = useTransactions();
 
   // Theme toggle function
-  const toggleTheme = () => {
-    const newTheme = theme === "light" ? "dark" : "light";
-    setTheme(newTheme);
+  const toggleTheme = async () => {
+    const newTheme = localTheme === "light" ? "dark" : "light";
+    setLocalTheme(newTheme);
+
+    // อัพเดท localStorage ทันที
     localStorage.setItem("expense-tracker-theme", newTheme);
     document.documentElement.setAttribute("data-theme", newTheme);
+
+    // อัพเดท user profile ใน Firebase
+    if (currentUser && updateUserProfile) {
+      try {
+        await updateUserProfile({
+          preferences: {
+            ...userProfile?.preferences,
+            theme: newTheme,
+          },
+        });
+      } catch (error) {
+        console.error("Failed to update theme preference:", error);
+      }
+    }
   };
 
   // Language toggle function
-  const toggleLanguage = () => {
-    const newLanguage = language === "th" ? "en" : "th";
-    setLanguage(newLanguage);
+  const toggleLanguage = async () => {
+    const newLanguage = localLanguage === "th" ? "en" : "th";
+    setLocalLanguage(newLanguage);
+
+    // อัพเดท localStorage ทันที
     localStorage.setItem("expense-tracker-language", newLanguage);
+
+    // อัพเดท user profile ใน Firebase
+    if (currentUser && updateUserProfile) {
+      try {
+        await updateUserProfile({
+          preferences: {
+            ...userProfile?.preferences,
+            language: newLanguage,
+          },
+        });
+      } catch (error) {
+        console.error("Failed to update language preference:", error);
+      }
+    }
   };
 
   // Apply theme on component mount and change
   useEffect(() => {
-    document.documentElement.setAttribute("data-theme", theme);
-    if (theme === "dark") {
+    document.documentElement.setAttribute("data-theme", localTheme);
+    if (localTheme === "dark") {
       document.documentElement.classList.add("dark");
     } else {
       document.documentElement.classList.remove("dark");
     }
-  }, [theme]);
+  }, [localTheme]);
 
   // Enhanced transaction functions with notifications
   const addTransaction = async (transactionData) => {
@@ -73,14 +165,14 @@ const App = () => {
 
       if (result.success) {
         showNotification(
-          language === "th"
+          localLanguage === "th"
             ? "เพิ่มรายการสำเร็จ! 🎉"
             : "Transaction added successfully! 🎉",
           "success"
         );
       } else {
         showNotification(
-          language === "th"
+          localLanguage === "th"
             ? "เกิดข้อผิดพลาดในการเพิ่มรายการ"
             : "Error adding transaction",
           "error"
@@ -89,7 +181,7 @@ const App = () => {
     } catch (error) {
       console.error("Error adding transaction:", error);
       showNotification(
-        language === "th"
+        localLanguage === "th"
           ? "เกิดข้อผิดพลาดในการเพิ่มรายการ"
           : "Error adding transaction",
         "error"
@@ -103,14 +195,14 @@ const App = () => {
 
       if (result.success) {
         showNotification(
-          language === "th"
+          localLanguage === "th"
             ? "แก้ไขรายการสำเร็จ! ✅"
             : "Transaction updated successfully! ✅",
           "success"
         );
       } else {
         showNotification(
-          language === "th"
+          localLanguage === "th"
             ? "เกิดข้อผิดพลาดในการแก้ไขรายการ"
             : "Error updating transaction",
           "error"
@@ -119,7 +211,7 @@ const App = () => {
     } catch (error) {
       console.error("Error updating transaction:", error);
       showNotification(
-        language === "th"
+        localLanguage === "th"
           ? "เกิดข้อผิดพลาดในการแก้ไขรายการ"
           : "Error updating transaction",
         "error"
@@ -128,17 +220,16 @@ const App = () => {
   };
 
   const deleteTransaction = async (transactionId) => {
-    // Find transaction for confirmation message
     const transaction = transactions.find((t) => t.id === transactionId);
     const confirmMessage = transaction
-      ? language === "th"
+      ? localLanguage === "th"
         ? `คุณแน่ใจหรือไม่ที่จะลบรายการ "${
             transaction.title
           }" จำนวน ฿${transaction.amount.toLocaleString()}?`
         : `Are you sure you want to delete "${
             transaction.title
           }" for ฿${transaction.amount.toLocaleString()}?`
-      : language === "th"
+      : localLanguage === "th"
       ? "คุณแน่ใจหรือไม่ที่จะลบรายการนี้?"
       : "Are you sure you want to delete this transaction?";
 
@@ -148,14 +239,14 @@ const App = () => {
 
         if (result.success) {
           showNotification(
-            language === "th"
+            localLanguage === "th"
               ? "ลบรายการสำเร็จ! 🗑️"
               : "Transaction deleted successfully! 🗑️",
             "success"
           );
         } else {
           showNotification(
-            language === "th"
+            localLanguage === "th"
               ? "เกิดข้อผิดพลาดในการลบรายการ"
               : "Error deleting transaction",
             "error"
@@ -164,7 +255,7 @@ const App = () => {
       } catch (error) {
         console.error("Error deleting transaction:", error);
         showNotification(
-          language === "th"
+          localLanguage === "th"
             ? "เกิดข้อผิดพลาดในการลบรายการ"
             : "Error deleting transaction",
           "error"
@@ -188,13 +279,13 @@ const App = () => {
     if (error) {
       console.error("Firebase error:", error);
       showNotification(
-        language === "th"
+        localLanguage === "th"
           ? "เกิดข้อผิดพลาดในการเชื่อมต่อฐานข้อมูล"
           : "Database connection error",
         "error"
       );
     }
-  }, [error, language]);
+  }, [error, localLanguage]);
 
   // Close mobile menu when clicking outside or changing page
   useEffect(() => {
@@ -208,6 +299,27 @@ const App = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  // Show auth loading
+  if (authLoading) {
+    return (
+      <div
+        className={`min-h-screen flex items-center justify-center ${
+          localTheme === "dark"
+            ? "bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900"
+            : "bg-gradient-to-br from-white via-gray-50 to-gray-100"
+        }`}
+      >
+        <AnimatedBackground theme={localTheme} />
+        <LoadingSpinner theme={localTheme} />
+      </div>
+    );
+  }
+
+  // Show auth page if not authenticated
+  if (!currentUser) {
+    return <AuthPage theme={localTheme} language={localLanguage} />;
+  }
+
   // Render current page based on route
   const renderCurrentPage = () => {
     const pageProps = {
@@ -216,8 +328,10 @@ const App = () => {
       isLoading,
       formatThaiDate,
       getRelativeTime,
-      theme,
-      language,
+      theme: localTheme,
+      language: localLanguage,
+      currentUser,
+      userProfile,
     };
 
     switch (currentPage) {
@@ -229,8 +343,8 @@ const App = () => {
           <AddTransaction
             onAddTransaction={addTransaction}
             isLoading={isLoading}
-            theme={theme}
-            language={language}
+            theme={localTheme}
+            language={localLanguage}
           />
         );
 
@@ -241,8 +355,8 @@ const App = () => {
             onEditTransaction={editTransaction}
             onDeleteTransaction={deleteTransaction}
             isLoading={isLoading}
-            theme={theme}
-            language={language}
+            theme={localTheme}
+            language={localLanguage}
           />
         );
 
@@ -252,34 +366,37 @@ const App = () => {
             transactions={transactions}
             totals={totals}
             formatThaiDate={formatThaiDate}
-            theme={theme}
-            language={language}
+            theme={localTheme}
+            language={localLanguage}
           />
         );
+
+      case "profile":
+        return <ProfilePage theme={localTheme} language={localLanguage} />;
 
       case "settings":
         return (
           <div
             className={`p-6 ${
-              theme === "dark" ? "text-gray-100" : "text-gray-900"
+              localTheme === "dark" ? "text-gray-100" : "text-gray-900"
             }`}
           >
             <h1 className="text-4xl font-bold bg-gradient-to-r from-red-600 to-red-400 bg-clip-text text-transparent mb-6">
-              {language === "th" ? "การตั้งค่า" : "Settings"}
+              {localLanguage === "th" ? "การตั้งค่า" : "Settings"}
             </h1>
             <div
               className={`${
-                theme === "dark" ? "bg-gray-800/80" : "bg-white/80"
+                localTheme === "dark" ? "bg-gray-800/80" : "bg-white/80"
               } backdrop-blur-sm rounded-2xl p-8 shadow-lg border ${
-                theme === "dark" ? "border-gray-700/50" : "border-white/20"
+                localTheme === "dark" ? "border-gray-700/50" : "border-white/20"
               }`}
             >
               <p
                 className={`text-center ${
-                  theme === "dark" ? "text-gray-400" : "text-gray-600"
+                  localTheme === "dark" ? "text-gray-400" : "text-gray-600"
                 }`}
               >
-                {language === "th"
+                {localLanguage === "th"
                   ? "หน้าการตั้งค่ากำลังพัฒนา..."
                   : "Settings page is under development..."}
               </p>
@@ -295,25 +412,25 @@ const App = () => {
   return (
     <div
       className={`min-h-screen transition-colors duration-300 ${
-        theme === "dark"
+        localTheme === "dark"
           ? "bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900"
           : "bg-gradient-to-br from-white via-gray-50 to-gray-100"
       }`}
     >
       {/* Animated Background */}
-      <AnimatedBackground theme={theme} />
+      <AnimatedBackground theme={localTheme} />
 
       {/* Loading Spinner */}
-      {isLoading && <LoadingSpinner theme={theme} />}
+      {isLoading && <LoadingSpinner theme={localTheme} />}
 
       {/* Notification */}
       {notification && (
         <Notification
-          key={notification.timestamp} // Force re-render for each notification
+          key={notification.timestamp}
           message={notification.message}
           type={notification.type}
           onClose={hideNotification}
-          theme={theme}
+          theme={localTheme}
         />
       )}
 
@@ -323,10 +440,12 @@ const App = () => {
         setCurrentPage={setCurrentPage}
         isMobileOpen={isMobileOpen}
         setIsMobileOpen={setIsMobileOpen}
-        theme={theme}
+        theme={localTheme}
         toggleTheme={toggleTheme}
-        language={language}
+        language={localLanguage}
         toggleLanguage={toggleLanguage}
+        currentUser={currentUser}
+        userProfile={userProfile}
       />
 
       {/* Header */}
@@ -335,14 +454,15 @@ const App = () => {
         setIsMobileOpen={setIsMobileOpen}
         totals={totals}
         currentPage={currentPage}
-        theme={theme}
-        language={language}
+        theme={localTheme}
+        language={localLanguage}
+        currentUser={currentUser}
+        userProfile={userProfile}
       />
 
       {/* Main Content */}
       <main className="lg:ml-80 pt-20">
-        {/* Error Boundary for Pages */}
-        <ErrorBoundary theme={theme} language={language}>
+        <ErrorBoundary theme={localTheme} language={localLanguage}>
           {renderCurrentPage()}
         </ErrorBoundary>
       </main>
@@ -354,15 +474,26 @@ const App = () => {
           totals={totals}
           isLoading={isLoading}
           error={error}
-          theme={theme}
-          language={language}
+          theme={localTheme}
+          language={localLanguage}
+          currentUser={currentUser}
+          userProfile={userProfile}
         />
       )}
     </div>
   );
 };
 
-// Error Boundary Component
+// Root App Component with AuthProvider
+const App = () => {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
+  );
+};
+
+// Error Boundary Component (ไม่เปลี่ยนแปลง)
 class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
@@ -422,7 +553,7 @@ class ErrorBoundary extends React.Component {
   }
 }
 
-// Debug Panel Component (Development Only)
+// Updated Debug Panel Component
 const DebugPanel = ({
   transactions,
   totals,
@@ -430,6 +561,8 @@ const DebugPanel = ({
   error,
   theme,
   language,
+  currentUser,
+  userProfile,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -458,7 +591,7 @@ const DebugPanel = ({
       } rounded-lg shadow-2xl p-4 max-w-sm z-50 border`}
     >
       <div className="flex justify-between items-center mb-3">
-        <h3 className={`font-bold text-blue-600`}>Debug Panel</h3>
+        <h3 className="font-bold text-blue-600">Debug Panel</h3>
         <button
           onClick={() => setIsOpen(false)}
           className={`${
@@ -476,6 +609,12 @@ const DebugPanel = ({
           theme === "dark" ? "text-gray-300" : "text-gray-700"
         }`}
       >
+        <div>
+          <strong>User:</strong> {currentUser?.email || "Not logged in"}
+        </div>
+        <div>
+          <strong>Display Name:</strong> {userProfile?.displayName || "N/A"}
+        </div>
         <div>
           <strong>Theme:</strong> {theme}
         </div>
