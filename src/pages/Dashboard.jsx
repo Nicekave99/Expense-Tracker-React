@@ -215,8 +215,8 @@ const Dashboard = ({
           <div className="absolute inset-0 flex flex-col items-center justify-center z-20">
             <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-full p-6 shadow-2xl border border-white/20 dark:border-gray-700/50">
               <div
-                className={`text-sm font-semibold mb-1 ${
-                  theme === "dark" ? "text-gray-300" : "text-gray-600"
+                className={`text-sm font-semibold mb-1 text-center ${
+                  theme === "dark" ? "text-white" : "text-white"
                 }`}
               >
                 {language === "th" ? "ยอดรวม" : "Total"}
@@ -292,6 +292,7 @@ const Dashboard = ({
     trend,
     subtitle,
     isBalance = false,
+
     index = 0,
   }) => (
     <div
@@ -347,12 +348,15 @@ const Dashboard = ({
           >
             {title}
           </h3>
+
           <p
             className={`text-3xl font-bold transition-all duration-300 ${
-              isBalance
-                ? amount >= 0
-                  ? "text-transparent bg-gradient-to-r from-emerald-500 to-emerald-400 bg-clip-text"
-                  : "text-transparent bg-gradient-to-r from-red-500 to-red-400 bg-clip-text"
+              title.includes("Income") || title.includes("รายรับ")
+                ? "text-transparent bg-gradient-to-r from-emerald-500 to-emerald-400 bg-clip-text"
+                : title.includes("Expense") || title.includes("รายจ่าย")
+                ? "text-transparent bg-gradient-to-r from-red-500 to-red-400 bg-clip-text"
+                : title.includes("Balance") || title.includes("ยอดคงเหลือ")
+                ? "text-transparent bg-gradient-to-r from-blue-500 to-blue-400 bg-clip-text"
                 : `text-transparent bg-gradient-to-r ${gradient
                     .split(" ")
                     .slice(1, 3)
@@ -712,6 +716,7 @@ const Dashboard = ({
             language === "th" ? "เดือนนี้" : "This month"
           } ฿${stats.monthlyIncome.toLocaleString()}`}
           index={0}
+          isBalance={true}
         />
         <StatCard
           title={language === "th" ? "รายจ่ายทั้งหมด" : "Total Expenses"}
@@ -723,6 +728,7 @@ const Dashboard = ({
             language === "th" ? "เดือนนี้" : "This month"
           } ฿${stats.monthlyExpense.toLocaleString()}`}
           index={1}
+          isBalance={true}
         />
         <StatCard
           title={language === "th" ? "ยอดคงเหลือ" : "Balance"}

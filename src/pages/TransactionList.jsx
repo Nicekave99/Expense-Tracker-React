@@ -129,7 +129,7 @@ const TransactionList = ({
           <h3 className="text-xl font-bold text-gray-800">รายละเอียดรายการ</h3>
           <button
             onClick={onClose}
-            className="p-2 rounded-xl hover:bg-gray-100 transition-colors"
+            className="p-2 rounded-xl text-white bg-black hover:bg-gray-700 transition-colors"
           >
             <X size={20} />
           </button>
@@ -253,7 +253,7 @@ const TransactionList = ({
           <select
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
-            className="px-4 py-3 rounded-xl border border-gray-200 focus:border-red-400 focus:ring-2 focus:ring-red-100 outline-none bg-white/50"
+            className="px-4 py-3 rounded-xl border border-gray-200 focus:border-red-400 focus:ring-2 focus:ring-red-100 outline-none bg-white/50 text-black"
           >
             <option value="all">ทุกประเภท</option>
             <option value="income">รายรับ</option>
@@ -264,7 +264,7 @@ const TransactionList = ({
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
-            className="px-4 py-3 rounded-xl border border-gray-200 focus:border-red-400 focus:ring-2 focus:ring-red-100 outline-none bg-white/50"
+            className="px-4 py-3 rounded-xl border border-gray-200 focus:border-red-400 focus:ring-2 focus:ring-red-100 outline-none bg-white/50 text-black"
           >
             <option value="date">เรียงตามวันที่</option>
             <option value="amount">เรียงตามจำนวน</option>
@@ -274,7 +274,7 @@ const TransactionList = ({
           {/* Sort Order */}
           <button
             onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
-            className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-gray-200 hover:border-red-300 hover:bg-red-50 transition-all bg-white/50"
+            className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-gray-200 hover:border-red-300 hover:bg-red-50 transition-all bg-white/50 text-black"
           >
             <ArrowUpDown size={18} />
             {sortOrder === "asc" ? "น้อย → มาก" : "มาก → น้อย"}

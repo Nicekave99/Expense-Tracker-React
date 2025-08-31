@@ -228,7 +228,7 @@ const Report = ({ transactions }) => {
             <select
               value={reportType}
               onChange={(e) => setReportType(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-red-400 focus:ring-2 focus:ring-red-100 outline-none bg-white/50 transition-all"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-red-400 focus:ring-2 focus:ring-red-100 outline-none bg-white/50 transition-all text-black"
             >
               <option value="monthly">รายเดือน</option>
               <option value="yearly">รายปี</option>
@@ -242,7 +242,7 @@ const Report = ({ transactions }) => {
               <select
                 value={selectedYear}
                 onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-red-400 focus:ring-2 focus:ring-red-100 outline-none bg-white/50 transition-all"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-red-400 focus:ring-2 focus:ring-red-100 outline-none bg-white/50 transition-all text-black"
               >
                 {Array.from(
                   { length: 5 },
@@ -264,7 +264,7 @@ const Report = ({ transactions }) => {
               <select
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-red-400 focus:ring-2 focus:ring-red-100 outline-none bg-white/50 transition-all"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-red-400 focus:ring-2 focus:ring-red-100 outline-none bg-white/50 transition-all text-black"
               >
                 {months.map((month, index) => (
                   <option key={index} value={index}>

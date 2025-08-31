@@ -235,12 +235,8 @@ const Header = ({
                   }`}
                 >
                   <TrendingUp className="text-green-600" size={16} />
-                  <span
-                    className={`text-sm font-medium ${
-                      theme === "dark" ? "text-gray-300" : "text-gray-700"
-                    }`}
-                  >
-                    ฿{totals.income?.toLocaleString() || "0"}
+                  <span className={`text-sm font-medium text-green-500 `}>
+                    ฿ {totals.income?.toLocaleString() || "0"}
                   </span>
                 </div>
                 <div
@@ -249,12 +245,8 @@ const Header = ({
                   }`}
                 >
                   <TrendingDown className="text-red-600" size={16} />
-                  <span
-                    className={`text-sm font-medium ${
-                      theme === "dark" ? "text-gray-300" : "text-gray-700"
-                    }`}
-                  >
-                    ฿{totals.expense?.toLocaleString() || "0"}
+                  <span className={`text-sm font-medium text-red-500`}>
+                    ฿ {totals.expense?.toLocaleString() || "0"}
                   </span>
                 </div>
                 <div
@@ -267,7 +259,7 @@ const Header = ({
                       totals.balance >= 0 ? "text-blue-600" : "text-red-600"
                     }`}
                   >
-                    ฿{Math.abs(totals.balance || 0).toLocaleString()}
+                    ฿ {Math.abs(totals.balance || 0).toLocaleString()}
                   </span>
                 </div>
               </div>

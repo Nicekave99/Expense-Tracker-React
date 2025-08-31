@@ -169,7 +169,7 @@ const Sidebar = ({
                       isActive
                         ? "text-white/80"
                         : `${
-                            theme === "dark" ? "text-gray-500" : "text-gray-400"
+                            theme === "dark" ? "text-gray-600" : "text-gray-400"
                           } group-hover:text-red-400`
                     }`}
                   >
