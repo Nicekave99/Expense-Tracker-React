@@ -11,6 +11,7 @@ import Dashboard from "./pages/Dashboard";
 import AddTransaction from "./pages/AddTransaction";
 import TransactionList from "./pages/TransactionList";
 import Report from "./pages/Report";
+import Settings from "./pages/Settings";
 
 // Import Auth Components
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
@@ -375,34 +376,7 @@ const AppContent = () => {
         return <ProfilePage theme={localTheme} language={localLanguage} />;
 
       case "settings":
-        return (
-          <div
-            className={`p-6 ${
-              localTheme === "dark" ? "text-gray-100" : "text-gray-900"
-            }`}
-          >
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-red-600 to-red-400 bg-clip-text text-transparent mb-6">
-              {localLanguage === "th" ? "การตั้งค่า" : "Settings"}
-            </h1>
-            <div
-              className={`${
-                localTheme === "dark" ? "bg-gray-800/80" : "bg-white/80"
-              } backdrop-blur-sm rounded-2xl p-8 shadow-lg border ${
-                localTheme === "dark" ? "border-gray-700/50" : "border-white/20"
-              }`}
-            >
-              <p
-                className={`text-center ${
-                  localTheme === "dark" ? "text-gray-400" : "text-gray-600"
-                }`}
-              >
-                {localLanguage === "th"
-                  ? "หน้าการตั้งค่ากำลังพัฒนา..."
-                  : "Settings page is under development..."}
-              </p>
-            </div>
-          </div>
-        );
+        return <Settings theme={localTheme} language={localLanguage} />;
 
       default:
         return <Dashboard {...pageProps} />;
@@ -458,6 +432,7 @@ const AppContent = () => {
         language={localLanguage}
         currentUser={currentUser}
         userProfile={userProfile}
+         setCurrentPage={setCurrentPage}
       />
 
       {/* Main Content */}

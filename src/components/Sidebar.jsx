@@ -252,7 +252,7 @@ const Sidebar = ({
             </div>
           </button>
 
-          {/* General Settings */}
+          {/* General Settings
           <button
             onClick={() => handleMenuClick("settings")}
             className={`w-full flex items-center gap-4 px-4 py-3 rounded-2xl ${
@@ -279,7 +279,7 @@ const Sidebar = ({
             <span className="font-medium">
               {language === "th" ? "ตั้งค่าทั่วไป" : "General Settings"}
             </span>
-          </button>
+          </button> */}
         </div>
 
         {/* Footer */}
@@ -293,7 +293,7 @@ const Sidebar = ({
               theme === "dark" ? "text-gray-500" : "text-gray-400"
             }`}
           >
-            <p>Expense Tracker v1.0</p>
+            <p>Expense Tracker v2.0</p>
             <p className="mt-1">© 2025</p>
           </div>
         </div>

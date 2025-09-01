@@ -1,4 +1,3 @@
-// pages/TransactionList.jsx
 import React, { useState, useMemo } from "react";
 import {
   Edit3,
@@ -8,23 +7,25 @@ import {
   TrendingUp,
   TrendingDown,
   Search,
-  Filter,
-  Calendar,
   FileText,
   DollarSign,
   Eye,
-  MoreHorizontal,
   ChevronLeft,
   ChevronRight,
   ArrowUpDown,
   Download,
 } from "lucide-react";
 
+// Bilingual + Theme-aware TransactionList
+// Props kept intact and extended: transactions, onEditTransaction, onDeleteTransaction, isLoading
+// Added: language ("th" | "en"), theme ("light" | "dark")
 const TransactionList = ({
   transactions,
   onEditTransaction,
   onDeleteTransaction,
   isLoading,
+  language = "th",
+  theme = "light",
 }) => {
   const [editingTransaction, setEditingTransaction] = useState(null);
   const [editFormData, setEditFormData] = useState({});
@@ -37,7 +38,10 @@ const TransactionList = ({
 
   const itemsPerPage = 10;
 
-  // Filter and sort transactions
+  // i18n helper
+  const t = (th, en) => (language === "th" ? th : en);
+
+  // Filter & sort
   const filteredTransactions = useMemo(() => {
     let filtered = transactions.filter((transaction) => {
       const matchesSearch =
@@ -50,10 +54,8 @@ const TransactionList = ({
       return matchesSearch && matchesFilter;
     });
 
-    // Sort transactions
     filtered.sort((a, b) => {
       let aValue, bValue;
-
       switch (sortBy) {
         case "date":
           aValue = new Date(a.date);
@@ -64,32 +66,32 @@ const TransactionList = ({
           bValue = b.amount;
           break;
         case "title":
-          aValue = a.title.toLowerCase();
-          bValue = b.title.toLowerCase();
+          aValue = (a.title || "").toLowerCase();
+          bValue = (b.title || "").toLowerCase();
+          break;
+        case "type":
+          aValue = a.type || "";
+          bValue = b.type || "";
           break;
         default:
           return 0;
       }
-
-      if (sortOrder === "asc") {
-        return aValue > bValue ? 1 : -1;
-      } else {
-        return aValue < bValue ? 1 : -1;
-      }
+      if (sortOrder === "asc") return aValue > bValue ? 1 : -1;
+      return aValue < bValue ? 1 : -1;
     });
 
     return filtered;
   }, [transactions, searchTerm, filterType, sortBy, sortOrder]);
 
   // Pagination
-  const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
+  const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage) || 1;
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedTransactions = filteredTransactions.slice(
     startIndex,
     startIndex + itemsPerPage
   );
 
-  // Handle edit
+  // Handlers
   const handleEdit = (transaction) => {
     setEditingTransaction(transaction.id);
     setEditFormData({ ...transaction });
@@ -106,12 +108,10 @@ const TransactionList = ({
     setEditFormData({});
   };
 
-  // Handle delete
   const handleDelete = (transactionId) => {
     onDeleteTransaction(transactionId);
   };
 
-  // Handle sort
   const handleSort = (field) => {
     if (sortBy === field) {
       setSortOrder(sortOrder === "asc" ? "desc" : "asc");
@@ -124,12 +124,23 @@ const TransactionList = ({
   // Transaction Detail Modal
   const TransactionModal = ({ transaction, onClose }) => (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl">
+      <div
+        className={`${
+          theme === "dark" ? "bg-gray-900 text-white" : "bg-white text-gray-800"
+        } rounded-3xl max-w-md w-full p-6 shadow-2xl`}
+      >
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xl font-bold text-gray-800">รายละเอียดรายการ</h3>
+          <h3 className="text-xl font-bold">
+            {t("รายละเอียดรายการ", "Transaction Details")}
+          </h3>
           <button
             onClick={onClose}
-            className="p-2 rounded-xl text-white bg-black hover:bg-gray-700 transition-colors"
+            className={`p-2 rounded-xl transition-colors ${
+              theme === "dark"
+                ? "bg-gray-800 hover:bg-gray-700"
+                : "bg-black text-white hover:bg-gray-700"
+            }`}
+            aria-label={t("ปิดหน้าต่าง", "Close")}
           >
             <X size={20} />
           </button>
@@ -158,23 +169,20 @@ const TransactionList = ({
                 )}
               </div>
               <div>
-                <p className="font-semibold text-gray-800">
-                  {transaction.title}
-                </p>
+                <p className="font-semibold">{transaction.title}</p>
                 {transaction.category && (
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
                     {transaction.category}
                   </p>
                 )}
               </div>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-500">
-                {new Date(transaction.date).toLocaleDateString("th-TH", {
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                })}
+              <span className="text-sm text-gray-500 dark:text-gray-400">
+                {new Date(transaction.date).toLocaleDateString(
+                  language === "th" ? "th-TH" : "en-US",
+                  { year: "numeric", month: "long", day: "numeric" }
+                )}
               </span>
               <span
                 className={`text-2xl font-bold ${
@@ -191,18 +199,20 @@ const TransactionList = ({
 
           {transaction.description && (
             <div>
-              <h4 className="font-medium text-gray-700 mb-2">หมายเหตุ</h4>
-              <p className="text-gray-600 bg-gray-50 p-3 rounded-xl">
+              <h4 className="font-medium mb-2">{t("หมายเหตุ", "Notes")}</h4>
+              <p className="bg-gray-50 dark:bg-gray-800 p-3 rounded-xl">
                 {transaction.description}
               </p>
             </div>
           )}
 
-          <div className="text-xs text-gray-500 text-center pt-2 border-t border-gray-100">
-            รายการนี้ถูกสร้างเมื่อ{" "}
+          <div className="text-xs text-center pt-2 border-t border-gray-100 dark:border-gray-700">
+            {t("รายการนี้ถูกสร้างเมื่อ", "Created on")}{" "}
             {transaction.createdAt
-              ? new Date(transaction.createdAt).toLocaleDateString("th-TH")
-              : "ไม่ทราบ"}
+              ? new Date(transaction.createdAt).toLocaleDateString(
+                  language === "th" ? "th-TH" : "en-US"
+                )
+              : t("ไม่ทราบ", "Unknown")}
           </div>
         </div>
       </div>
@@ -215,37 +225,52 @@ const TransactionList = ({
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
         <div>
           <h1 className="text-4xl font-bold bg-gradient-to-r from-red-600 to-red-400 bg-clip-text text-transparent">
-            รายการทั้งหมด
+            {t("รายการทั้งหมด", "All Transactions")}
           </h1>
-          <p className="text-gray-600 mt-2">จัดการและดูประวัติรายรับ-รายจ่าย</p>
+          <p
+            className={`${
+              theme === "dark" ? "text-gray-300" : "text-gray-600"
+            } mt-2`}
+          >
+            {t(
+              "จัดการและดูประวัติรายรับ-รายจ่าย",
+              "Manage and view income-expense history"
+            )}
+          </p>
         </div>
 
-        <div className="flex items-center gap-3">
-          {/* <button className="flex items-center gap-2 px-4 py-2 bg-green-100 text-green-700 rounded-xl hover:bg-green-200 transition-colors">
-            <Download size={18} />
-            Export
-          </button> */}
-          <div className="text-sm text-gray-500">
-            {filteredTransactions.length} รายการ
-          </div>
+        <div
+          className={`${
+            theme === "dark" ? "text-gray-400" : "text-gray-500"
+          } text-sm`}
+        >
+          {filteredTransactions.length} {t("รายการ", "items")}
         </div>
       </div>
 
-      {/* Filters and Search */}
-      <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg mb-6">
+      {/* Filters & Search */}
+      <div
+        className={`${
+          theme === "dark" ? "bg-gray-900 text-white" : "bg-white text-gray-800"
+        } backdrop-blur-sm rounded-2xl p-6 shadow-lg mb-6`}
+      >
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {/* Search */}
           <div className="relative">
             <Search
-              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
               size={18}
             />
             <input
               type="text"
-              placeholder="ค้นหารายการ..."
+              placeholder={t("ค้นหารายการ...", "Search transactions...")}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:border-red-400 focus:ring-2 focus:ring-red-100 outline-none transition-all bg-white/50"
+              className={`w-full pl-10 pr-4 py-3 rounded-xl border focus:border-red-400 focus:ring-2 focus:ring-red-100 outline-none transition-all ${
+                theme === "dark"
+                  ? "bg-gray-800 border-gray-700 placeholder:text-gray-400"
+                  : "bg-white border-gray-200"
+              }`}
             />
           </div>
 
@@ -253,79 +278,102 @@ const TransactionList = ({
           <select
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
-            className="px-4 py-3 rounded-xl border border-gray-200 focus:border-red-400 focus:ring-2 focus:ring-red-100 outline-none bg-white/50 text-black"
+            className={`px-4 py-3 rounded-xl border focus:border-red-400 focus:ring-2 focus:ring-red-100 outline-none ${
+              theme === "dark"
+                ? "bg-gray-800 border-gray-700"
+                : "bg-white border-gray-200"
+            }`}
           >
-            <option value="all">ทุกประเภท</option>
-            <option value="income">รายรับ</option>
-            <option value="expense">รายจ่าย</option>
+            <option value="all">{t("ทุกประเภท", "All Types")}</option>
+            <option value="income">{t("รายรับ", "Income")}</option>
+            <option value="expense">{t("รายจ่าย", "Expense")}</option>
           </select>
 
-          {/* Sort */}
+          {/* Sort Field */}
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
-            className="px-4 py-3 rounded-xl border border-gray-200 focus:border-red-400 focus:ring-2 focus:ring-red-100 outline-none bg-white/50 text-black"
+            className={`px-4 py-3 rounded-xl border focus:border-red-400 focus:ring-2 focus:ring-red-100 outline-none ${
+              theme === "dark"
+                ? "bg-gray-800 border-gray-700"
+                : "bg-white border-gray-200"
+            }`}
           >
-            <option value="date">เรียงตามวันที่</option>
-            <option value="amount">เรียงตามจำนวน</option>
-            <option value="title">เรียงตามชื่อ</option>
+            <option value="date">{t("เรียงตามวันที่", "Sort by Date")}</option>
+            <option value="amount">
+              {t("เรียงตามจำนวน", "Sort by Amount")}
+            </option>
+            <option value="title">{t("เรียงตามชื่อ", "Sort by Title")}</option>
+            <option value="type">{t("เรียงตามประเภท", "Sort by Type")}</option>
           </select>
 
           {/* Sort Order */}
           <button
             onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
-            className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-gray-200 hover:border-red-300 hover:bg-red-50 transition-all bg-white/50 text-black"
+            className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl border transition-all ${
+              theme === "dark"
+                ? "bg-gray-800 border-gray-700 hover:bg-gray-700"
+                : "bg-white border-gray-200 hover:bg-red-50"
+            }`}
           >
             <ArrowUpDown size={18} />
-            {sortOrder === "asc" ? "น้อย → มาก" : "มาก → น้อย"}
+            {sortOrder === "asc"
+              ? t("น้อย → มาก", "Low → High")
+              : t("มาก → น้อย", "High → Low")}
           </button>
         </div>
       </div>
 
-      {/* Transaction Table */}
-      <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg overflow-hidden">
+      {/* Table */}
+      <div
+        className={`${
+          theme === "dark" ? "bg-gray-900 text-white" : "bg-white text-gray-800"
+        } backdrop-blur-sm rounded-2xl shadow-lg overflow-hidden`}
+      >
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="bg-gradient-to-r from-red-50 to-pink-50 border-b border-red-100">
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+              <tr
+                className={`${
+                  theme === "dark"
+                    ? "bg-gray-800 border-b border-gray-700"
+                    : "bg-gradient-to-r from-red-50 to-pink-50 border-b border-red-100"
+                }`}
+              >
+                <th className="px-6 py-4 text-left text-sm font-semibold">
                   <button
                     onClick={() => handleSort("type")}
-                    className="flex items-center gap-1 hover:text-red-600 transition-colors"
+                    className="flex items-center gap-1"
                   >
-                    ประเภท
-                    <ArrowUpDown size={14} />
+                    {t("ประเภท", "Type")} <ArrowUpDown size={14} />
                   </button>
                 </th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                <th className="px-6 py-4 text-left text-sm font-semibold">
                   <button
                     onClick={() => handleSort("title")}
-                    className="flex items-center gap-1 hover:text-red-600 transition-colors"
+                    className="flex items-center gap-1"
                   >
-                    รายละเอียด
-                    <ArrowUpDown size={14} />
+                    {t("รายละเอียด", "Details")} <ArrowUpDown size={14} />
                   </button>
                 </th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                <th className="px-6 py-4 text-left text-sm font-semibold">
                   <button
                     onClick={() => handleSort("amount")}
-                    className="flex items-center gap-1 hover:text-red-600 transition-colors"
+                    className="flex items-center gap-1"
                   >
-                    จำนวนเงิน
-                    <ArrowUpDown size={14} />
+                    {t("จำนวนเงิน", "Amount")} <ArrowUpDown size={14} />
                   </button>
                 </th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                <th className="px-6 py-4 text-left text-sm font-semibold">
                   <button
                     onClick={() => handleSort("date")}
-                    className="flex items-center gap-1 hover:text-red-600 transition-colors"
+                    className="flex items-center gap-1"
                   >
-                    วันที่
-                    <ArrowUpDown size={14} />
+                    {t("วันที่", "Date")} <ArrowUpDown size={14} />
                   </button>
                 </th>
-                <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700">
-                  การจัดการ
+                <th className="px-6 py-4 text-center text-sm font-semibold">
+                  {t("การจัดการ", "Actions")}
                 </th>
               </tr>
             </thead>
@@ -333,17 +381,26 @@ const TransactionList = ({
               {paginatedTransactions.map((transaction, index) => (
                 <tr
                   key={transaction.id}
-                  className={`border-b border-gray-100 hover:bg-gray-50/50 transition-colors ${
-                    index % 2 === 0 ? "bg-white/30" : "bg-gray-50/30"
-                  }`}
+                  className={`${
+                    index % 2 === 0
+                      ? theme === "dark"
+                        ? "bg-gray-800"
+                        : "bg-white/30"
+                      : theme === "dark"
+                      ? "bg-gray-700"
+                      : "bg-gray-50/30"
+                  } border-b ${
+                    theme === "dark" ? "border-gray-700" : "border-gray-100"
+                  } transition-colors`}
                 >
+                  {/* Type */}
                   <td className="px-6 py-4">
                     {editingTransaction === transaction.id ? (
                       <div className="flex gap-2">
-                        <label className="flex items-center">
+                        <label className="flex items-center cursor-pointer">
                           <input
                             type="radio"
-                            name="editType"
+                            name={`editType-${transaction.id}`}
                             value="income"
                             checked={editFormData.type === "income"}
                             onChange={(e) =>
@@ -355,20 +412,22 @@ const TransactionList = ({
                             className="sr-only"
                           />
                           <div
-                            className={`px-3 py-1 rounded-lg text-sm flex items-center gap-1 cursor-pointer transition-all ${
+                            className={`px-3 py-1 rounded-lg text-sm flex items-center gap-1 transition-all ${
                               editFormData.type === "income"
                                 ? "bg-green-100 text-green-700"
+                                : theme === "dark"
+                                ? "bg-gray-800 text-gray-400 hover:bg-gray-700"
                                 : "bg-gray-100 text-gray-500 hover:bg-green-50"
                             }`}
                           >
                             <TrendingUp size={14} />
-                            รายรับ
+                            {t("รายรับ", "Income")}
                           </div>
                         </label>
-                        <label className="flex items-center">
+                        <label className="flex items-center cursor-pointer">
                           <input
                             type="radio"
-                            name="editType"
+                            name={`editType-${transaction.id}`}
                             value="expense"
                             checked={editFormData.type === "expense"}
                             onChange={(e) =>
@@ -380,14 +439,16 @@ const TransactionList = ({
                             className="sr-only"
                           />
                           <div
-                            className={`px-3 py-1 rounded-lg text-sm flex items-center gap-1 cursor-pointer transition-all ${
+                            className={`px-3 py-1 rounded-lg text-sm flex items-center gap-1 transition-all ${
                               editFormData.type === "expense"
                                 ? "bg-red-100 text-red-700"
+                                : theme === "dark"
+                                ? "bg-gray-800 text-gray-400 hover:bg-gray-700"
                                 : "bg-gray-100 text-gray-500 hover:bg-red-50"
                             }`}
                           >
                             <TrendingDown size={14} />
-                            รายจ่าย
+                            {t("รายจ่าย", "Expense")}
                           </div>
                         </label>
                       </div>
@@ -404,11 +465,14 @@ const TransactionList = ({
                         ) : (
                           <TrendingDown size={14} />
                         )}
-                        {transaction.type === "income" ? "รายรับ" : "รายจ่าย"}
+                        {transaction.type === "income"
+                          ? t("รายรับ", "Income")
+                          : t("รายจ่าย", "Expense")}
                       </span>
                     )}
                   </td>
 
+                  {/* Details */}
                   <td className="px-6 py-4">
                     {editingTransaction === transaction.id ? (
                       <div className="space-y-2">
@@ -421,30 +485,36 @@ const TransactionList = ({
                               title: e.target.value,
                             })
                           }
-                          className="w-full px-3 py-1 rounded-lg border border-gray-200 focus:border-red-400 outline-none"
+                          className={`w-full px-3 py-1 rounded-lg border outline-none ${
+                            theme === "dark"
+                              ? "bg-gray-800 border-gray-700"
+                              : "bg-white border-gray-200"
+                          } focus:border-red-400`}
                         />
-                        {editFormData.category && (
+                        {typeof editFormData.category !== "undefined" && (
                           <input
                             type="text"
-                            value={editFormData.category}
+                            value={editFormData.category || ""}
                             onChange={(e) =>
                               setEditFormData({
                                 ...editFormData,
                                 category: e.target.value,
                               })
                             }
-                            placeholder="หมวดหมู่"
-                            className="w-full px-3 py-1 text-sm rounded-lg border border-gray-200 focus:border-red-400 outline-none"
+                            placeholder={t("หมวดหมู่", "Category")}
+                            className={`w-full px-3 py-1 text-sm rounded-lg border outline-none ${
+                              theme === "dark"
+                                ? "bg-gray-800 border-gray-700"
+                                : "bg-white border-gray-200"
+                            } focus:border-red-400`}
                           />
                         )}
                       </div>
                     ) : (
                       <div>
-                        <span className="font-medium text-gray-800">
-                          {transaction.title}
-                        </span>
+                        <span className="font-medium">{transaction.title}</span>
                         {transaction.category && (
-                          <p className="text-sm text-gray-500">
+                          <p className="text-sm text-gray-500 dark:text-gray-400">
                             {transaction.category}
                           </p>
                         )}
@@ -452,6 +522,7 @@ const TransactionList = ({
                     )}
                   </td>
 
+                  {/* Amount */}
                   <td className="px-6 py-4">
                     {editingTransaction === transaction.id ? (
                       <input
@@ -463,7 +534,11 @@ const TransactionList = ({
                             amount: parseFloat(e.target.value),
                           })
                         }
-                        className="w-full px-3 py-1 rounded-lg border border-gray-200 focus:border-red-400 outline-none"
+                        className={`w-full px-3 py-1 rounded-lg border outline-none ${
+                          theme === "dark"
+                            ? "bg-gray-800 border-gray-700"
+                            : "bg-white border-gray-200"
+                        } focus:border-red-400`}
                         step="0.01"
                       />
                     ) : (
@@ -480,6 +555,7 @@ const TransactionList = ({
                     )}
                   </td>
 
+                  {/* Date */}
                   <td className="px-6 py-4">
                     {editingTransaction === transaction.id ? (
                       <input
@@ -491,15 +567,26 @@ const TransactionList = ({
                             date: e.target.value,
                           })
                         }
-                        className="px-3 py-1 rounded-lg border border-gray-200 focus:border-red-400 outline-none"
+                        className={`px-3 py-1 rounded-lg border outline-none ${
+                          theme === "dark"
+                            ? "bg-gray-800 border-gray-700"
+                            : "bg-white border-gray-200"
+                        } focus:border-red-400`}
                       />
                     ) : (
-                      <span className="text-gray-600">
-                        {new Date(transaction.date).toLocaleDateString("th-TH")}
+                      <span
+                        className={
+                          theme === "dark" ? "text-gray-300" : "text-gray-600"
+                        }
+                      >
+                        {new Date(transaction.date).toLocaleDateString(
+                          language === "th" ? "th-TH" : "en-US"
+                        )}
                       </span>
                     )}
                   </td>
 
+                  {/* Actions */}
                   <td className="px-6 py-4">
                     <div className="flex items-center justify-center gap-2">
                       {editingTransaction === transaction.id ? (
@@ -507,13 +594,15 @@ const TransactionList = ({
                           <button
                             onClick={handleSaveEdit}
                             disabled={isLoading}
-                            className="p-2 rounded-lg bg-green-100 text-green-600 hover:bg-green-200 transition-colors disabled:opacity-50"
+                            className="p-2 rounded-lg bg-green-100 text-green-600 hover:bg-green-200 disabled:opacity-50"
+                            title={t("บันทึก", "Save")}
                           >
                             <Save size={16} />
                           </button>
                           <button
                             onClick={handleCancelEdit}
-                            className="p-2 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
+                            className="p-2 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200"
+                            title={t("ยกเลิก", "Cancel")}
                           >
                             <X size={16} />
                           </button>
@@ -522,22 +611,22 @@ const TransactionList = ({
                         <>
                           <button
                             onClick={() => setSelectedTransaction(transaction)}
-                            className="p-2 rounded-lg bg-blue-100 text-blue-600 hover:bg-blue-200 transition-colors"
-                            title="ดูรายละเอียด"
+                            className="p-2 rounded-lg bg-blue-100 text-blue-600 hover:bg-blue-200"
+                            title={t("ดูรายละเอียด", "View details")}
                           >
                             <Eye size={16} />
                           </button>
                           <button
                             onClick={() => handleEdit(transaction)}
-                            className="p-2 rounded-lg bg-yellow-100 text-yellow-600 hover:bg-yellow-200 transition-colors"
-                            title="แก้ไข"
+                            className="p-2 rounded-lg bg-yellow-100 text-yellow-600 hover:bg-yellow-200"
+                            title={t("แก้ไข", "Edit")}
                           >
                             <Edit3 size={16} />
                           </button>
                           <button
                             onClick={() => handleDelete(transaction.id)}
-                            className="p-2 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 transition-colors"
-                            title="ลบ"
+                            className="p-2 rounded-lg bg-red-100 text-red-600 hover:bg-red-200"
+                            title={t("ลบ", "Delete")}
                           >
                             <Trash2 size={16} />
                           </button>
@@ -552,33 +641,62 @@ const TransactionList = ({
 
           {paginatedTransactions.length === 0 && (
             <div className="text-center py-12">
-              <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-2xl flex items-center justify-center mx-auto mb-4">
                 <FileText className="text-gray-400" size={24} />
               </div>
-              <p className="text-gray-500 font-medium">
-                ไม่พบรายการที่ตรงกับการค้นหา
+              <p
+                className={`${
+                  theme === "dark" ? "text-gray-300" : "text-gray-500"
+                } font-medium`}
+              >
+                {t(
+                  "ไม่พบรายการที่ตรงกับการค้นหา",
+                  "No transactions match your search"
+                )}
               </p>
-              <p className="text-sm text-gray-400 mt-1">
-                ลองเปลี่ยนเงื่อนไขการค้นหา
+              <p
+                className={`text-sm ${
+                  theme === "dark" ? "text-gray-500" : "text-gray-400"
+                } mt-1`}
+              >
+                {t(
+                  "ลองเปลี่ยนเงื่อนไขการค้นหา",
+                  "Try changing your filters or search term"
+                )}
               </p>
             </div>
           )}
         </div>
 
         {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100">
-            <div className="text-sm text-gray-500">
-              แสดง {startIndex + 1}-
+        {filteredTransactions.length > 0 && (
+          <div
+            className={`flex items-center justify-between px-6 py-4 border-t ${
+              theme === "dark" ? "border-gray-700" : "border-gray-100"
+            }`}
+          >
+            <div
+              className={`${
+                theme === "dark" ? "text-gray-400" : "text-gray-500"
+              } text-sm`}
+            >
+              {t("แสดง", "Showing")}{" "}
+              {filteredTransactions.length === 0 ? 0 : startIndex + 1}-
               {Math.min(startIndex + itemsPerPage, filteredTransactions.length)}{" "}
-              จาก {filteredTransactions.length} รายการ
+              {t("จาก", "of")} {filteredTransactions.length}{" "}
+              {t("รายการ", "items")}
             </div>
 
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                 disabled={currentPage === 1}
-                className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className={`p-2 rounded-lg border transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                  theme === "dark"
+                    ? "border-gray-700 hover:bg-gray-800"
+                    : "border-gray-200 hover:bg-gray-50"
+                }`}
+                aria-label={t("ก่อนหน้า", "Previous")}
               >
                 <ChevronLeft size={16} />
               </button>
@@ -592,8 +710,11 @@ const TransactionList = ({
                       className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
                         currentPage === page
                           ? "bg-red-500 text-white"
-                          : "hover:bg-gray-100 text-gray-600"
+                          : theme === "dark"
+                          ? "text-gray-300 hover:bg-gray-800"
+                          : "text-gray-600 hover:bg-gray-100"
                       }`}
+                      aria-current={currentPage === page ? "page" : undefined}
                     >
                       {page}
                     </button>
@@ -606,7 +727,12 @@ const TransactionList = ({
                   setCurrentPage(Math.min(totalPages, currentPage + 1))
                 }
                 disabled={currentPage === totalPages}
-                className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className={`p-2 rounded-lg border transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                  theme === "dark"
+                    ? "border-gray-700 hover:bg-gray-800"
+                    : "border-gray-200 hover:bg-gray-50"
+                }`}
+                aria-label={t("ถัดไป", "Next")}
               >
                 <ChevronRight size={16} />
               </button>
@@ -615,7 +741,7 @@ const TransactionList = ({
         )}
       </div>
 
-      {/* Transaction Detail Modal */}
+      {/* Detail Modal */}
       {selectedTransaction && (
         <TransactionModal
           transaction={selectedTransaction}

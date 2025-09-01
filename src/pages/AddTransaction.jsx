@@ -1,4 +1,4 @@
-// pages/AddTransaction.jsx - Updated with Dark Theme Support
+// pages/AddTransaction.jsx - Updated with Language Support
 import React, { useState } from "react";
 import {
   Plus,
@@ -12,7 +12,12 @@ import {
   Sparkles,
 } from "lucide-react";
 
-const AddTransaction = ({ onAddTransaction, isLoading, theme = "light" }) => {
+const AddTransaction = ({
+  onAddTransaction,
+  isLoading,
+  theme = "light",
+  language = "th",
+}) => {
   const [formData, setFormData] = useState({
     type: "income",
     title: "",
@@ -25,30 +30,131 @@ const AddTransaction = ({ onAddTransaction, isLoading, theme = "light" }) => {
   const [errors, setErrors] = useState({});
   const [showSuccess, setShowSuccess] = useState(false);
 
-  // Predefined categories
-  const categories = {
-    income: [
-      "เงินเดือน",
-      "โบนัส",
-      "ค่าจ้างพิเศษ",
-      "เงินปันผล",
-      "รายได้จากการลงทุน",
-      "ขายของ",
-      "อื่นๆ",
-    ],
-    expense: [
-      "อาหาร",
-      "เครื่องดื่ม",
-      "ค่าเดินทาง",
-      "ช้อปปิ้ง",
-      "ค่าใช้จ่ายในบ้าน",
-      "ค่ารักษาพยาบาล",
-      "ความบันเทิง",
-      "การศึกษา",
-      "ประกันภัย",
-      "อื่นๆ",
-    ],
+  // Translation object
+  const t = {
+    th: {
+      pageTitle: "เพิ่มรายการใหม่",
+      pageSubtitle: "บันทึกรายรับหรือรายจ่ายของคุณ",
+      success: "สำเร็จ!",
+      successMessage: "เพิ่มรายการเรียบร้อยแล้ว",
+      transactionType: "ประเภทรายการ",
+      income: "รายรับ",
+      incomeDesc: "เงินเข้า",
+      expense: "รายจ่าย",
+      expenseDesc: "เงินออก",
+      details: "รายละเอียด",
+      detailsRequired: "รายละเอียด *",
+      detailsPlaceholder: "เช่น ค่าอาหารเช้า, เงินเดือน...",
+      detailsError: "กรุณาใส่รายละเอียด",
+      category: "หมวดหมู่",
+      selectCategory: "เลือกหมวดหมู่",
+      amount: "จำนวนเงิน",
+      amountRequired: "จำนวนเงิน *",
+      amountError: "กรุณาใส่จำนวนเงินที่ถูกต้อง",
+      date: "วันที่",
+      dateRequired: "วันที่ *",
+      dateError: "กรุณาเลือกวันที่",
+      note: "หมายเหตุ",
+      noteOptional: "หมายเหตุ (ไม่บังคับ)",
+      notePlaceholder: "เพิ่มรายละเอียดเพิ่มเติม...",
+      saveButton: "บันทึกรายการ",
+      saving: "กำลังบันทึก...",
+      resetButton: "รีเซ็ต",
+      tips: "เคล็ดลับ",
+      tip1: "ใส่รายละเอียดให้ชัดเจนเพื่อง่ายต่อการค้นหา",
+      tip2: "เลือกหมวดหมู่ให้ถูกต้องเพื่อการรายงานที่แม่นยำ",
+      tip3: "บันทึกทันทีหลังจากใช้จ่ายเพื่อไม่ให้ลืม",
+      preview: "ตัวอย่าง",
+      newTransaction: "รายการใหม่",
+      categories: {
+        income: [
+          "เงินเดือน",
+          "โบนัส",
+          "ค่าจ้างพิเศษ",
+          "เงินปันผล",
+          "รายได้จากการลงทุน",
+          "ขายของ",
+          "อื่นๆ",
+        ],
+        expense: [
+          "อาหาร",
+          "เครื่องดื่ม",
+          "ค่าเดินทาง",
+          "ช้อปปิ้ง",
+          "ค่าใช้จ่ายในบ้าน",
+          "ค่ารักษาพยาบาล",
+          "ความบันเทิง",
+          "การศึกษา",
+          "ประกันภัย",
+          "อื่นๆ",
+        ],
+      },
+    },
+    en: {
+      pageTitle: "Add New Transaction",
+      pageSubtitle: "Record your income or expense",
+      success: "Success!",
+      successMessage: "Transaction added successfully",
+      transactionType: "Transaction Type",
+      income: "Income",
+      incomeDesc: "Money In",
+      expense: "Expense",
+      expenseDesc: "Money Out",
+      details: "Details",
+      detailsRequired: "Details *",
+      detailsPlaceholder: "e.g., Breakfast, Salary...",
+      detailsError: "Please enter details",
+      category: "Category",
+      selectCategory: "Select Category",
+      amount: "Amount",
+      amountRequired: "Amount *",
+      amountError: "Please enter a valid amount",
+      date: "Date",
+      dateRequired: "Date *",
+      dateError: "Please select a date",
+      note: "Note",
+      noteOptional: "Note (Optional)",
+      notePlaceholder: "Add additional details...",
+      saveButton: "Save Transaction",
+      saving: "Saving...",
+      resetButton: "Reset",
+      tips: "Tips",
+      tip1: "Enter clear details for easy searching",
+      tip2: "Choose the right category for accurate reporting",
+      tip3: "Record immediately after spending to avoid forgetting",
+      preview: "Preview",
+      newTransaction: "New Transaction",
+      categories: {
+        income: [
+          "Salary",
+          "Bonus",
+          "Freelance",
+          "Dividends",
+          "Investment Income",
+          "Sales",
+          "Others",
+        ],
+        expense: [
+          "Food",
+          "Beverages",
+          "Transportation",
+          "Shopping",
+          "Household",
+          "Healthcare",
+          "Entertainment",
+          "Education",
+          "Insurance",
+          "Others",
+        ],
+      },
+    },
   };
+
+  // Get current language translations
+  const lang = t[language] || t.th;
+
+  // Predefined categories based on language
+  const categories = lang.categories;
 
   // Quick amount buttons
   const quickAmounts = [100, 200, 500, 1000, 2000, 5000];
@@ -58,15 +164,15 @@ const AddTransaction = ({ onAddTransaction, isLoading, theme = "light" }) => {
     const newErrors = {};
 
     if (!formData.title.trim()) {
-      newErrors.title = "กรุณาใส่รายละเอียด";
+      newErrors.title = lang.detailsError;
     }
 
     if (!formData.amount || formData.amount <= 0) {
-      newErrors.amount = "กรุณาใส่จำนวนเงินที่ถูกต้อง";
+      newErrors.amount = lang.amountError;
     }
 
     if (!formData.date) {
-      newErrors.date = "กรุณาเลือกวันที่";
+      newErrors.date = lang.dateError;
     }
 
     setErrors(newErrors);
@@ -125,6 +231,19 @@ const AddTransaction = ({ onAddTransaction, isLoading, theme = "light" }) => {
     setErrors({});
   };
 
+  // Format currency based on language
+  const formatCurrency = (amount) => {
+    const currency = language === "th" ? "฿" : "฿";
+    return `${currency}${amount.toLocaleString()}`;
+  };
+
+  // Format date based on language
+  const formatDate = (dateString) => {
+    if (!dateString) return lang.date;
+    const date = new Date(dateString);
+    return date.toLocaleDateString(language === "th" ? "th-TH" : "en-US");
+  };
+
   return (
     <div
       className={`p-6 max-w-4xl mx-auto ${
@@ -138,11 +257,11 @@ const AddTransaction = ({ onAddTransaction, isLoading, theme = "light" }) => {
             <Plus className="text-white" size={28} />
           </div>
           <h1 className="text-4xl font-bold bg-gradient-to-r from-red-600 to-red-400 bg-clip-text text-transparent">
-            เพิ่มรายการใหม่
+            {lang.pageTitle}
           </h1>
         </div>
         <p className={theme === "dark" ? "text-gray-400" : "text-gray-600"}>
-          บันทึกรายรับหรือรายจ่ายของคุณ
+          {lang.pageSubtitle}
         </p>
       </div>
 
@@ -162,10 +281,10 @@ const AddTransaction = ({ onAddTransaction, isLoading, theme = "light" }) => {
                 theme === "dark" ? "text-white" : "text-gray-800"
               } mb-2`}
             >
-              สำเร็จ!
+              {lang.success}
             </h3>
             <p className={theme === "dark" ? "text-gray-400" : "text-gray-600"}>
-              เพิ่มรายการเรียบร้อยแล้ว
+              {lang.successMessage}
             </p>
           </div>
         </div>
@@ -189,7 +308,7 @@ const AddTransaction = ({ onAddTransaction, isLoading, theme = "light" }) => {
                     theme === "dark" ? "text-gray-300" : "text-gray-700"
                   } font-semibold mb-4`}
                 >
-                  ประเภทรายการ
+                  {lang.transactionType}
                 </label>
                 <div className="grid grid-cols-2 gap-4">
                   <label className="cursor-pointer">
@@ -222,8 +341,10 @@ const AddTransaction = ({ onAddTransaction, isLoading, theme = "light" }) => {
                     >
                       <TrendingUp size={24} />
                       <div>
-                        <div className="font-semibold">รายรับ</div>
-                        <div className="text-sm opacity-70">เงินเข้า</div>
+                        <div className="font-semibold">{lang.income}</div>
+                        <div className="text-sm opacity-70">
+                          {lang.incomeDesc}
+                        </div>
                       </div>
                     </div>
                   </label>
@@ -258,8 +379,10 @@ const AddTransaction = ({ onAddTransaction, isLoading, theme = "light" }) => {
                     >
                       <TrendingDown size={24} />
                       <div>
-                        <div className="font-semibold">รายจ่าย</div>
-                        <div className="text-sm opacity-70">เงินออก</div>
+                        <div className="font-semibold">{lang.expense}</div>
+                        <div className="text-sm opacity-70">
+                          {lang.expenseDesc}
+                        </div>
                       </div>
                     </div>
                   </label>
@@ -273,7 +396,7 @@ const AddTransaction = ({ onAddTransaction, isLoading, theme = "light" }) => {
                     theme === "dark" ? "text-gray-300" : "text-gray-700"
                   } font-semibold mb-2`}
                 >
-                  รายละเอียด *
+                  {lang.detailsRequired}
                 </label>
                 <div className="relative">
                   <FileText
@@ -297,7 +420,7 @@ const AddTransaction = ({ onAddTransaction, isLoading, theme = "light" }) => {
                             theme === "dark" ? "gray-600" : "gray-200"
                           } focus:border-red-400 focus:ring-red-100`
                     }`}
-                    placeholder="เช่น ค่าอาหารเช้า, เงินเดือน..."
+                    placeholder={lang.detailsPlaceholder}
                   />
                 </div>
                 {errors.title && (
@@ -312,7 +435,7 @@ const AddTransaction = ({ onAddTransaction, isLoading, theme = "light" }) => {
                     theme === "dark" ? "text-gray-300" : "text-gray-700"
                   } font-semibold mb-2`}
                 >
-                  หมวดหมู่
+                  {lang.category}
                 </label>
                 <select
                   value={formData.category}
@@ -327,7 +450,7 @@ const AddTransaction = ({ onAddTransaction, isLoading, theme = "light" }) => {
                       : "bg-white/70 text-gray-900"
                   }`}
                 >
-                  <option value="">เลือกหมวดหมู่</option>
+                  <option value="">{lang.selectCategory}</option>
                   {categories[formData.type].map((category) => (
                     <option key={category} value={category}>
                       {category}
@@ -343,7 +466,7 @@ const AddTransaction = ({ onAddTransaction, isLoading, theme = "light" }) => {
                     theme === "dark" ? "text-gray-300" : "text-gray-700"
                   } font-semibold mb-2`}
                 >
-                  จำนวนเงิน *
+                  {lang.amountRequired}
                 </label>
                 <div className="relative">
                   <DollarSign
@@ -393,7 +516,7 @@ const AddTransaction = ({ onAddTransaction, isLoading, theme = "light" }) => {
                           : "bg-gray-100 hover:bg-red-100 hover:text-red-600 text-gray-700"
                       } rounded-xl text-sm font-medium transition-all duration-200`}
                     >
-                      ฿{amount.toLocaleString()}
+                      {formatCurrency(amount)}
                     </button>
                   ))}
                 </div>
@@ -406,7 +529,7 @@ const AddTransaction = ({ onAddTransaction, isLoading, theme = "light" }) => {
                     theme === "dark" ? "text-gray-300" : "text-gray-700"
                   } font-semibold mb-2`}
                 >
-                  วันที่ *
+                  {lang.dateRequired}
                 </label>
                 <div className="relative">
                   <Calendar
@@ -444,7 +567,7 @@ const AddTransaction = ({ onAddTransaction, isLoading, theme = "light" }) => {
                     theme === "dark" ? "text-gray-300" : "text-gray-700"
                   } font-semibold mb-2`}
                 >
-                  หมายเหตุ (ไม่บังคับ)
+                  {lang.noteOptional}
                 </label>
                 <textarea
                   value={formData.description}
@@ -459,7 +582,7 @@ const AddTransaction = ({ onAddTransaction, isLoading, theme = "light" }) => {
                       : "bg-white/70 text-gray-900"
                   } resize-none`}
                   rows="3"
-                  placeholder="เพิ่มรายละเอียดเพิ่มเติม..."
+                  placeholder={lang.notePlaceholder}
                 />
               </div>
 
@@ -477,12 +600,12 @@ const AddTransaction = ({ onAddTransaction, isLoading, theme = "light" }) => {
                   {isLoading ? (
                     <>
                       <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      กำลังบันทึก...
+                      {lang.saving}
                     </>
                   ) : (
                     <>
                       <Save size={20} />
-                      บันทึกรายการ
+                      {lang.saveButton}
                     </>
                   )}
                 </button>
@@ -499,7 +622,7 @@ const AddTransaction = ({ onAddTransaction, isLoading, theme = "light" }) => {
                   } transition-all duration-300 flex items-center gap-2 font-semibold`}
                 >
                   <RotateCcw size={20} />
-                  รีเซ็ต
+                  {lang.resetButton}
                 </button>
               </div>
             </form>
@@ -527,7 +650,7 @@ const AddTransaction = ({ onAddTransaction, isLoading, theme = "light" }) => {
                 }`}
                 size={20}
               />
-              เคล็ดลับ
+              {lang.tips}
             </h3>
             <ul
               className={`space-y-3 text-sm ${
@@ -540,7 +663,7 @@ const AddTransaction = ({ onAddTransaction, isLoading, theme = "light" }) => {
                     theme === "dark" ? "bg-blue-400" : "bg-blue-400"
                   } rounded-full mt-2 flex-shrink-0`}
                 ></div>
-                <span>ใส่รายละเอียดให้ชัดเจนเพื่อง่ายต่อการค้นหา</span>
+                <span>{lang.tip1}</span>
               </li>
               <li className="flex items-start gap-2">
                 <div
@@ -548,7 +671,7 @@ const AddTransaction = ({ onAddTransaction, isLoading, theme = "light" }) => {
                     theme === "dark" ? "bg-blue-400" : "bg-blue-400"
                   } rounded-full mt-2 flex-shrink-0`}
                 ></div>
-                <span>เลือกหมวดหมู่ให้ถูกต้องเพื่อการรายงานที่แม่นยำ</span>
+                <span>{lang.tip2}</span>
               </li>
               <li className="flex items-start gap-2">
                 <div
@@ -556,7 +679,7 @@ const AddTransaction = ({ onAddTransaction, isLoading, theme = "light" }) => {
                     theme === "dark" ? "bg-blue-400" : "bg-blue-400"
                   } rounded-full mt-2 flex-shrink-0`}
                 ></div>
-                <span>บันทึกทันทีหลังจากใช้จ่ายเพื่อไม่ให้ลืม</span>
+                <span>{lang.tip3}</span>
               </li>
             </ul>
           </div>
@@ -575,7 +698,7 @@ const AddTransaction = ({ onAddTransaction, isLoading, theme = "light" }) => {
                   theme === "dark" ? "text-gray-200" : "text-gray-800"
                 } mb-4`}
               >
-                ตัวอย่าง
+                {lang.preview}
               </h3>
               <div
                 className={`p-4 rounded-2xl border-2 ${
@@ -600,7 +723,7 @@ const AddTransaction = ({ onAddTransaction, isLoading, theme = "light" }) => {
                   </div>
                   <div>
                     <p className="font-semibold text-gray-800">
-                      {formData.title || "รายการใหม่"}
+                      {formData.title || lang.newTransaction}
                     </p>
                     {formData.category && (
                       <p className="text-sm text-gray-500">
@@ -611,9 +734,7 @@ const AddTransaction = ({ onAddTransaction, isLoading, theme = "light" }) => {
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-500">
-                    {formData.date
-                      ? new Date(formData.date).toLocaleDateString("th-TH")
-                      : "วันที่"}
+                    {formatDate(formData.date)}
                   </span>
                   <span
                     className={`text-lg font-bold ${
@@ -622,10 +743,8 @@ const AddTransaction = ({ onAddTransaction, isLoading, theme = "light" }) => {
                         : "text-red-600"
                     }`}
                   >
-                    {formData.type === "income" ? "+" : "-"}฿
-                    {formData.amount
-                      ? parseFloat(formData.amount).toLocaleString()
-                      : "0"}
+                    {formData.type === "income" ? "+" : "-"}
+                    {formatCurrency(parseFloat(formData.amount) || 0)}
                   </span>
                 </div>
                 {formData.description && (

@@ -11,58 +11,49 @@ import {
   Activity,
   ChevronRight,
   Sparkles,
-  Zap,
-  CreditCard,
-  DollarSign,
   BarChart3,
-  Eye,
   Star,
 } from "lucide-react";
 
+/* -----------------------------
+ * Typing Text Effect (หัวข้อ)
+ * ----------------------------- */
+const TypingText = ({ text = "Dashboard", speed = 60, className = "" }) => {
+  const [display, setDisplay] = useState("");
+  useEffect(() => {
+    setDisplay("");
+    let i = 0;
+    const timer = setInterval(() => {
+      i += 1;
+      setDisplay(text.slice(0, i));
+      if (i >= text.length) clearInterval(timer);
+    }, speed);
+    return () => clearInterval(timer);
+  }, [text, speed]);
+
+  return (
+    <span className={`inline-flex items-baseline ${className}`}>
+      <span>{display}</span>
+      {/* caret กระพริบ */}
+      <span className="ml-1 animate-caret">|</span>
+    </span>
+  );
+};
+
 const Dashboard = ({
-  transactions = [
-    {
-      id: 1,
-      title: "Salary",
-      amount: 50000,
-      type: "income",
-      date: "2025-08-01",
-    },
-    {
-      id: 2,
-      title: "Groceries",
-      amount: 2500,
-      type: "expense",
-      date: "2025-08-15",
-    },
-    {
-      id: 3,
-      title: "Freelance",
-      amount: 15000,
-      type: "income",
-      date: "2025-08-20",
-    },
-    {
-      id: 4,
-      title: "Utilities",
-      amount: 3200,
-      type: "expense",
-      date: "2025-08-25",
-    },
-    {
-      id: 5,
-      title: "Investment Return",
-      amount: 8000,
-      type: "income",
-      date: "2025-08-26",
-    },
-  ],
+  transactions = [],
   theme = "light",
   language = "en",
+  monthlyGoal = 10000, // ค่าเริ่มต้นจาก parent
 }) => {
   const [showAllTransactions, setShowAllTransactions] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const [animateCards, setAnimateCards] = useState(false);
+
+  // --- Goal State (แก้จาก input ได้) ---
+  const [goal, setGoal] = useState(Number(monthlyGoal) || 0);
+  const [goalInput, setGoalInput] = useState(String(Number(monthlyGoal) || 0));
+  const [savingGoal, setSavingGoal] = useState(false);
 
   useEffect(() => {
     setIsLoaded(true);
@@ -70,34 +61,39 @@ const Dashboard = ({
     return () => clearTimeout(timer);
   }, []);
 
-  // Calculate statistics
+  // caret style เฉพาะ component นี้
+  const CaretStyle = () => (
+    <style>{`
+      .animate-caret { animation: caretBlink 1s steps(2, start) infinite; }
+      @keyframes caretBlink { to { visibility: hidden; } }
+    `}</style>
+  );
+
+  // --- สถิติหลัก (คำนวณก่อนใช้งานจุดอื่น ๆ) ---
   const stats = useMemo(() => {
     const totalIncome = transactions
       .filter((t) => t.type === "income")
-      .reduce((sum, t) => sum + t.amount, 0);
+      .reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
     const totalExpense = transactions
       .filter((t) => t.type === "expense")
-      .reduce((sum, t) => sum + t.amount, 0);
+      .reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
     const balance = totalIncome - totalExpense;
 
-    // Calculate this month's data
-    const currentMonth = new Date().getMonth();
-    const currentYear = new Date().getFullYear();
+    const now = new Date();
+    const cm = now.getMonth();
+    const cy = now.getFullYear();
 
     const thisMonthTransactions = transactions.filter((t) => {
-      const transactionDate = new Date(t.date);
-      return (
-        transactionDate.getMonth() === currentMonth &&
-        transactionDate.getFullYear() === currentYear
-      );
+      const d = new Date(t.date);
+      return d.getMonth() === cm && d.getFullYear() === cy;
     });
 
     const monthlyIncome = thisMonthTransactions
       .filter((t) => t.type === "income")
-      .reduce((sum, t) => sum + t.amount, 0);
+      .reduce((s, t) => s + (Number(t.amount) || 0), 0);
     const monthlyExpense = thisMonthTransactions
       .filter((t) => t.type === "expense")
-      .reduce((sum, t) => sum + t.amount, 0);
+      .reduce((s, t) => s + (Number(t.amount) || 0), 0);
 
     return {
       totalIncome,
@@ -110,14 +106,17 @@ const Dashboard = ({
     };
   }, [transactions]);
 
-  // Enhanced Pie Chart Component with smooth animations
+  // --- ตัวแปรที่ขึ้นกับ stats และ goal (ต้องอยู่หลัง stats) ---
+  const netSaved = stats.monthlyIncome - stats.monthlyExpense;
+  const progressPct = goal > 0 ? Math.min((netSaved / goal) * 100, 100) : 0;
+  const filledDots = goal > 0 ? Math.floor((netSaved / goal) * 5) : 0;
+
+  // --- กราฟวงกลมเล็ก ๆ (คงไว้) ---
   const PieChartComponent = () => {
     const [animationProgress, setAnimationProgress] = useState(0);
 
     useEffect(() => {
-      const timer = setTimeout(() => {
-        setAnimationProgress(1);
-      }, 500);
+      const timer = setTimeout(() => setAnimationProgress(1), 500);
       return () => clearTimeout(timer);
     }, []);
 
@@ -136,9 +135,9 @@ const Dashboard = ({
     return (
       <div className="flex flex-col items-center">
         <div className="relative w-52 h-52 mb-6">
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/20 dark:to-purple-900/20 rounded-full animate-pulse"></div>
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/20 dark:to-purple-900/20 rounded-full animate-pulse" />
           <svg
-            className="w-full h-full transform -rotate-90 relative z-10"
+            className="w-full h-full -rotate-90 relative z-10"
             viewBox="0 0 200 200"
           >
             <defs>
@@ -182,7 +181,6 @@ const Dashboard = ({
               fill="transparent"
               className="drop-shadow-sm"
             />
-
             <circle
               cx="100"
               cy="100"
@@ -195,7 +193,6 @@ const Dashboard = ({
               filter="url(#glow)"
               className="transition-all duration-[2000ms] ease-out drop-shadow-lg"
             />
-
             <circle
               cx="100"
               cy="100"
@@ -214,17 +211,11 @@ const Dashboard = ({
 
           <div className="absolute inset-0 flex flex-col items-center justify-center z-20">
             <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-full p-6 shadow-2xl border border-white/20 dark:border-gray-700/50">
-              <div
-                className={`text-sm font-semibold mb-1 text-center ${
-                  theme === "dark" ? "text-white" : "text-white"
-                }`}
-              >
+              <div className="text-sm font-semibold mb-1 text-center text-white">
                 {language === "th" ? "ยอดรวม" : "Total"}
               </div>
-              <div
-                className={`text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent`}
-              >
-                ฿{total.toLocaleString()}
+              <div className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                ฿{(stats.totalIncome + stats.totalExpense).toLocaleString()}
               </div>
               <div className="flex items-center justify-center mt-2">
                 <Sparkles className="text-yellow-500 animate-pulse" size={16} />
@@ -234,11 +225,8 @@ const Dashboard = ({
         </div>
 
         <div className="flex flex-col sm:flex-row items-center gap-6 sm:gap-8">
-          <div className="flex items-center gap-3 group cursor-pointer">
-            <div className="relative">
-              <div className="w-6 h-6 bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-full shadow-lg group-hover:scale-110 transition-transform duration-300"></div>
-              <div className="absolute inset-0 bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-full blur-sm opacity-50 group-hover:opacity-75 transition-opacity"></div>
-            </div>
+          <div className="flex items-center gap-3">
+            <span className="relative w-6 h-6 rounded-full shadow-lg bg-gradient-to-r from-emerald-400 to-emerald-600" />
             <div>
               <span
                 className={`text-sm font-semibold ${
@@ -256,11 +244,8 @@ const Dashboard = ({
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-3 group cursor-pointer">
-            <div className="relative">
-              <div className="w-6 h-6 bg-gradient-to-r from-red-400 to-red-600 rounded-full shadow-lg group-hover:scale-110 transition-transform duration-300"></div>
-              <div className="absolute inset-0 bg-gradient-to-r from-red-400 to-red-600 rounded-full blur-sm opacity-50 group-hover:opacity-75 transition-opacity"></div>
-            </div>
+          <div className="flex items-center gap-3">
+            <span className="relative w-6 h-6 rounded-full shadow-lg bg-gradient-to-r from-red-400 to-red-600" />
             <div>
               <span
                 className={`text-sm font-semibold ${
@@ -283,7 +268,8 @@ const Dashboard = ({
     );
   };
 
-  // Enhanced Stat Card Component
+  // --- Card เดิม ๆ (คงไว้) ---
+  // --- Card (แก้เรื่องสีตัวเลขให้กำหนดเองได้) ---
   const StatCard = ({
     title,
     amount,
@@ -291,9 +277,8 @@ const Dashboard = ({
     gradient,
     trend,
     subtitle,
-    isBalance = false,
-
     index = 0,
+    amountClassName = "", // ✅ เพิ่ม: ให้กำหนดสีตัวเลขจากภายนอกได้
   }) => (
     <div
       className={`group relative overflow-hidden ${
@@ -303,37 +288,30 @@ const Dashboard = ({
       } backdrop-blur-xl rounded-3xl p-6 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-[1.02] border ${
         animateCards ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
       }`}
-      style={{
-        transitionDelay: `${index * 100}ms`,
-      }}
+      style={{ transitionDelay: `${index * 100}ms` }}
     >
       <div
         className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-500`}
-      ></div>
-
-      <div className="absolute -top-4 -right-4 w-24 h-24 bg-gradient-to-br from-blue-400/10 to-purple-400/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
-      <div className="absolute -bottom-4 -left-4 w-20 h-20 bg-gradient-to-br from-pink-400/10 to-orange-400/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700 delay-200"></div>
-
+      />
       <div className="relative z-10">
         <div className="flex items-center justify-between mb-6">
           <div
-            className={`p-4 rounded-2xl bg-gradient-to-br ${gradient} text-white shadow-xl group-hover:shadow-2xl group-hover:scale-110 transition-all duration-300 relative`}
+            className={`p-4 rounded-2xl bg-gradient-to-br ${gradient} text-white shadow-xl`}
           >
-            <Icon size={28} className="relative z-10" />
-            <div className="absolute inset-0 bg-white/20 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <Icon size={28} />
           </div>
-          {trend !== undefined && (
+          {typeof trend === "number" && (
             <div
               className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold backdrop-blur-sm ${
                 trend >= 0
-                  ? "bg-gradient-to-r from-emerald-100/80 to-emerald-50/80 text-emerald-700 border border-emerald-200/50 dark:from-emerald-900/30 dark:to-emerald-800/30 dark:text-emerald-400 dark:border-emerald-700/30"
-                  : "bg-gradient-to-r from-red-100/80 to-red-50/80 text-red-700 border border-red-200/50 dark:from-red-900/30 dark:to-red-800/30 dark:text-red-400 dark:border-red-700/30"
-              } hover:scale-105 transition-transform duration-300`}
+                  ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                  : "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+              }`}
             >
               {trend >= 0 ? (
-                <ArrowUpRight size={16} className="animate-bounce" />
+                <ArrowUpRight size={16} />
               ) : (
-                <ArrowDownRight size={16} className="animate-bounce" />
+                <ArrowDownRight size={16} />
               )}
               {Math.abs(trend).toFixed(1)}%
             </div>
@@ -349,29 +327,17 @@ const Dashboard = ({
             {title}
           </h3>
 
-          <p
-            className={`text-3xl font-bold transition-all duration-300 ${
-              title.includes("Income") || title.includes("รายรับ")
-                ? "text-transparent bg-gradient-to-r from-emerald-500 to-emerald-400 bg-clip-text"
-                : title.includes("Expense") || title.includes("รายจ่าย")
-                ? "text-transparent bg-gradient-to-r from-red-500 to-red-400 bg-clip-text"
-                : title.includes("Balance") || title.includes("ยอดคงเหลือ")
-                ? "text-transparent bg-gradient-to-r from-blue-500 to-blue-400 bg-clip-text"
-                : `text-transparent bg-gradient-to-r ${gradient
-                    .split(" ")
-                    .slice(1, 3)
-                    .join(" ")} bg-clip-text`
-            }`}
-          >
+          {/* ✅ เอากราเดียนต์ออก ให้ใช้สีตาม class ภายนอก */}
+          <p className={`text-3xl font-bold ${amountClassName}`}>
             ฿{Math.abs(amount).toLocaleString()}
           </p>
+
           {subtitle && (
             <p
               className={`text-sm font-medium ${
                 theme === "dark" ? "text-gray-400" : "text-gray-500"
-              } flex items-center gap-2`}
+              }`}
             >
-              <Star size={12} className="text-yellow-400" />
               {subtitle}
             </p>
           )}
@@ -380,7 +346,6 @@ const Dashboard = ({
     </div>
   );
 
-  // Enhanced Quick Stats Component
   const QuickStats = () => (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
       {[
@@ -428,17 +393,14 @@ const Dashboard = ({
           } backdrop-blur-xl rounded-2xl p-5 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 border ${
             isLoaded ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
           }`}
-          style={{
-            transitionDelay: `${index * 75}ms`,
-          }}
+          style={{ transitionDelay: `${index * 75}ms` }}
         >
           <div
-            className={`absolute inset-0 bg-gradient-to-br ${stat.bgGradient} opacity-50 group-hover:opacity-75 transition-opacity duration-300`}
-          ></div>
-
+            className={`absolute inset-0 bg-gradient-to-br ${stat.bgGradient} opacity-50`}
+          />
           <div className="relative z-10 text-center">
             <div
-              className={`inline-flex p-3 rounded-xl ${stat.color} bg-white/80 dark:bg-gray-700/80 shadow-lg mb-3 group-hover:scale-110 transition-transform duration-300`}
+              className={`inline-flex p-3 rounded-xl ${stat.color} bg-white/80 dark:bg-gray-700/80 shadow-lg mb-3`}
             >
               <stat.icon size={24} />
             </div>
@@ -458,12 +420,11 @@ const Dashboard = ({
     </div>
   );
 
-  // Enhanced Recent Transactions Component
+  // รายการล่าสุด
   const RecentTransactions = () => {
     const displayTransactions = showAllTransactions
       ? transactions
       : transactions.slice(-5);
-
     return (
       <div
         className={`${
@@ -472,9 +433,8 @@ const Dashboard = ({
             : "bg-white/90 border-white/30"
         } backdrop-blur-xl rounded-3xl p-6 lg:p-8 shadow-2xl border relative overflow-hidden`}
       >
-        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-500/5 to-purple-500/5 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-0 left-0 w-40 h-40 bg-gradient-to-tr from-pink-500/5 to-orange-500/5 rounded-full blur-3xl"></div>
-
+        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-500/5 to-purple-500/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 left-0 w-40 h-40 bg-gradient-to-tr from-pink-500/5 to-orange-500/5 rounded-full blur-3xl" />
         <div className="relative z-10">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
             <h2
@@ -500,24 +460,18 @@ const Dashboard = ({
                 : "View All"}
               <ChevronRight
                 size={16}
-                className={`transition-transform duration-300 group-hover:translate-x-1 ${
-                  showAllTransactions ? "rotate-90" : ""
-                }`}
+                className="transition-transform duration-300 group-hover:translate-x-1"
               />
             </button>
           </div>
 
           <div
-            className={`space-y-4 ${
+            className={`${
               showAllTransactions ? "max-h-96 overflow-y-auto" : ""
-            }`}
-            style={{
-              scrollbarWidth: "thin",
-              scrollbarColor:
-                theme === "dark" ? "#ef4444 #374151" : "#ef4444 #f1f5f9",
-            }}
+            } space-y-4`}
+            style={{ scrollbarWidth: "thin" }}
           >
-            {displayTransactions.reverse().map((transaction, index) => (
+            {[...displayTransactions].reverse().map((transaction, index) => (
               <div
                 key={transaction.id}
                 className={`group flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 lg:p-6 rounded-2xl transition-all duration-300 ${
@@ -529,13 +483,11 @@ const Dashboard = ({
                     ? "translate-x-0 opacity-100"
                     : "translate-x-4 opacity-0"
                 }`}
-                style={{
-                  transitionDelay: `${index * 50}ms`,
-                }}
+                style={{ transitionDelay: `${index * 50}ms` }}
               >
                 <div className="flex items-center gap-4 lg:gap-5">
                   <div
-                    className={`p-3 lg:p-4 rounded-2xl shadow-lg group-hover:scale-110 transition-all duration-300 ${
+                    className={`p-3 lg:p-4 rounded-2xl shadow-lg ${
                       transaction.type === "income"
                         ? "bg-gradient-to-br from-emerald-400 to-green-500 text-white"
                         : "bg-gradient-to-br from-red-400 to-pink-500 text-white"
@@ -572,18 +524,18 @@ const Dashboard = ({
                   <span
                     className={`text-lg lg:text-xl font-bold mb-2 block ${
                       transaction.type === "income"
-                        ? "text-transparent bg-gradient-to-r from-emerald-500 to-green-400 bg-clip-text"
-                        : "text-transparent bg-gradient-to-r from-red-500 to-pink-400 bg-clip-text"
+                        ? "text-emerald-500"
+                        : "text-red-500"
                     }`}
                   >
                     {transaction.type === "income" ? "+" : "-"}฿
-                    {transaction.amount.toLocaleString()}
+                    {Number(transaction.amount || 0).toLocaleString()}
                   </span>
                   <div
                     className={`text-xs px-3 py-1.5 rounded-full font-semibold ${
                       transaction.type === "income"
-                        ? "bg-gradient-to-r from-emerald-100/80 to-green-100/80 text-emerald-700 border border-emerald-200/50 dark:from-emerald-900/30 dark:to-green-900/30 dark:text-emerald-400 dark:border-emerald-700/30"
-                        : "bg-gradient-to-r from-red-100/80 to-pink-100/80 text-red-700 border border-red-200/50 dark:from-red-900/30 dark:to-pink-900/30 dark:text-red-400 dark:border-red-700/30"
+                        ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                        : "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400"
                     }`}
                   >
                     {transaction.type === "income"
@@ -600,9 +552,7 @@ const Dashboard = ({
 
             {transactions.length === 0 && (
               <div className="text-center py-16">
-                <div
-                  className={`w-24 h-24 rounded-3xl flex items-center justify-center mx-auto mb-6 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 shadow-xl`}
-                >
+                <div className="w-24 h-24 rounded-3xl flex items-center justify-center mx-auto mb-6 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 shadow-xl">
                   <PieChart
                     className={`${
                       theme === "dark" ? "text-gray-400" : "text-gray-500"
@@ -642,7 +592,10 @@ const Dashboard = ({
           : "text-gray-900 bg-gray-50"
       } transition-colors duration-300`}
     >
-      {/* Enhanced Header */}
+      {/* caret styles */}
+      <CaretStyle />
+
+      {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div
           className={`${
@@ -650,7 +603,7 @@ const Dashboard = ({
           } transition-all duration-700`}
         >
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-red-500 via-pink-500 to-purple-500 bg-clip-text text-transparent mb-2">
-            Dashboard
+            <TypingText text="Dashboard" speed={60} />
           </h1>
           <p
             className={`text-base lg:text-lg ${
@@ -664,6 +617,7 @@ const Dashboard = ({
           </p>
         </div>
 
+        {/* วันที่มุมขวา */}
         <div
           className={`${
             theme === "dark"
@@ -704,53 +658,52 @@ const Dashboard = ({
       {/* Quick Stats */}
       <QuickStats />
 
-      {/* Main Statistics Cards */}
+      {/* Cards */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
-        <StatCard
-          title={language === "th" ? "รายรับทั้งหมด" : "Total Income"}
-          amount={stats.totalIncome}
-          icon={TrendingUp}
-          gradient="from-emerald-500 to-green-400"
-          trend={12.5}
-          subtitle={`${
-            language === "th" ? "เดือนนี้" : "This month"
-          } ฿${stats.monthlyIncome.toLocaleString()}`}
-          index={0}
-          isBalance={true}
-        />
-        <StatCard
-          title={language === "th" ? "รายจ่ายทั้งหมด" : "Total Expenses"}
-          amount={stats.totalExpense}
-          icon={TrendingDown}
-          gradient="from-red-500 to-pink-400"
-          trend={-8.2}
-          subtitle={`${
-            language === "th" ? "เดือนนี้" : "This month"
-          } ฿${stats.monthlyExpense.toLocaleString()}`}
-          index={1}
-          isBalance={true}
-        />
-        <StatCard
-          title={language === "th" ? "ยอดคงเหลือ" : "Balance"}
-          amount={stats.balance}
-          icon={Wallet}
-          gradient="from-blue-500 to-purple-400"
-          trend={stats.balance >= 0 ? 5.3 : -3.1}
-          subtitle={
-            stats.balance >= 0
-              ? language === "th"
-                ? "สถานะการเงินดี"
-                : "Financial status is good"
-              : language === "th"
-              ? "ควรควบคุมรายจ่าย"
-              : "Should control expenses"
-          }
-          isBalance={true}
-          index={2}
-        />
-      </div>
+  <StatCard
+    title={language === "th" ? "รายรับทั้งหมด" : "Total Income"}
+    amount={stats.totalIncome}
+    icon={TrendingUp}
+    gradient="from-emerald-500 to-green-400"
+    trend={12.5}
+    subtitle={`${language === "th" ? "เดือนนี้" : "This month"} ฿${stats.monthlyIncome.toLocaleString()}`}
+    index={0}
+    // ✅ สีตามที่คุณตั้ง (แก้ตรงนี้ได้เอง)
+    amountClassName="text-emerald-600 dark:text-emerald-400"
+  />
 
-      {/* Charts and Analytics Section */}
+  <StatCard
+    title={language === "th" ? "รายจ่ายทั้งหมด" : "Total Expenses"}
+    amount={stats.totalExpense}
+    icon={TrendingDown}
+    gradient="from-red-500 to-pink-400"
+    trend={-8.2}
+    subtitle={`${language === "th" ? "เดือนนี้" : "This month"} ฿${stats.monthlyExpense.toLocaleString()}`}
+    index={1}
+    // ✅ สีรายจ่าย
+    amountClassName="text-red-600 dark:text-red-400"
+  />
+
+  <StatCard
+    title={language === "th" ? "ยอดคงเหลือ" : "Balance"}
+    amount={stats.balance}
+    icon={Wallet}
+    gradient="from-blue-500 to-purple-400"
+    trend={stats.balance >= 0 ? 5.3 : -3.1}
+    subtitle={
+      stats.balance >= 0
+        ? language === "th" ? "สถานะการเงินดี" : "Financial status is good"
+        : language === "th" ? "ควรควบคุมรายจ่าย" : "Should control expenses"
+    }
+    index={2}
+    // ✅ สีบาลานซ์ (เปลี่ยนได้ตามที่คุณกำหนด)
+    amountClassName={stats.balance >= 0
+      ? "text-blue-600 dark:text-blue-400"
+      : "text-amber-600 dark:text-amber-400"}
+  />
+</div>
+
+      {/* Charts + Savings Goal */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 lg:gap-8">
         {/* Pie Chart */}
         <div
@@ -760,8 +713,7 @@ const Dashboard = ({
               : "bg-white/90 border-white/30"
           } backdrop-blur-xl rounded-3xl p-6 lg:p-8 shadow-2xl border relative overflow-hidden`}
         >
-          <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-green-500/10 to-blue-500/10 rounded-full blur-3xl"></div>
-
+          <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-green-500/10 to-blue-500/10 rounded-full blur-3xl" />
           <h3
             className={`text-xl lg:text-2xl font-bold mb-8 flex items-center gap-3 relative z-10 ${
               theme === "dark" ? "text-gray-100" : "text-gray-800"
@@ -784,7 +736,7 @@ const Dashboard = ({
           </div>
         </div>
 
-        {/* Enhanced Savings Goal */}
+        {/* Enhanced Savings Goal (แก้ไขเป้าหมายได้) */}
         <div
           className={`${
             theme === "dark"
@@ -792,8 +744,7 @@ const Dashboard = ({
               : "bg-white/90 border-white/30"
           } backdrop-blur-xl rounded-3xl p-6 lg:p-8 shadow-2xl border relative overflow-hidden`}
         >
-          <div className="absolute bottom-0 left-0 w-40 h-40 bg-gradient-to-tr from-yellow-500/10 to-orange-500/10 rounded-full blur-3xl"></div>
-
+          <div className="absolute bottom-0 left-0 w-40 h-40 bg-gradient-to-tr from-yellow-500/10 to-orange-500/10 rounded-full blur-3xl" />
           <h3
             className={`text-xl lg:text-2xl font-bold mb-8 flex items-center gap-3 relative z-10 ${
               theme === "dark" ? "text-gray-100" : "text-gray-800"
@@ -811,6 +762,53 @@ const Dashboard = ({
           </h3>
 
           <div className="space-y-6 relative z-10">
+            {/* กล่องกรอก + ปุ่มบันทึก */}
+            <div
+              className={`flex flex-col sm:flex-row gap-3 items-stretch sm:items-end`}
+            >
+              <div className="flex-1">
+                <label
+                  className={`block text-xs font-semibold mb-1 ${
+                    theme === "dark" ? "text-gray-300" : "text-gray-600"
+                  }`}
+                >
+                  {language === "th"
+                    ? "ตั้งค่าเป้าหมาย (บาท)"
+                    : "Set goal (THB)"}
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="100"
+                  value={goalInput}
+                  onChange={(e) => setGoalInput(e.target.value)}
+                  className={`w-full px-4 py-3 rounded-xl border outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-400 ${
+                    theme === "dark"
+                      ? "bg-gray-800 border-gray-700 text-gray-100"
+                      : "bg-white border-gray-200"
+                  }`}
+                  placeholder="10000"
+                />
+              </div>
+              <button
+                onClick={() => {
+                  setSavingGoal(true);
+                  const n = Math.max(0, Math.floor(Number(goalInput) || 0));
+                  setGoal(n);
+                  // normalize input text
+                  setGoalInput(String(n));
+                  setTimeout(() => setSavingGoal(false), 350);
+                }}
+                className={`px-5 py-3 rounded-xl font-semibold shadow-md transition-all ${
+                  theme === "dark"
+                    ? "bg-gradient-to-r from-yellow-500 to-orange-500 text-white hover:brightness-110"
+                    : "bg-gradient-to-r from-yellow-500 to-orange-500 text-white hover:brightness-105"
+                } ${savingGoal ? "scale-95 opacity-80" : "scale-100"}`}
+              >
+                {language === "th" ? "บันทึก" : "Save"}
+              </button>
+            </div>
+
             <div
               className={`${
                 theme === "dark" ? "bg-gray-700/50" : "bg-gray-50/80"
@@ -826,10 +824,8 @@ const Dashboard = ({
                 >
                   {language === "th" ? "เป้าหมายเดือนนี้" : "This Month's Goal"}
                 </span>
-                <span
-                  className={`text-sm lg:text-lg font-bold text-transparent bg-gradient-to-r from-yellow-500 to-orange-500 bg-clip-text`}
-                >
-                  ฿10,000
+                <span className="text-sm lg:text-lg font-bold text-transparent bg-gradient-to-r from-yellow-500 to-orange-500 bg-clip-text">
+                  ฿{goal.toLocaleString()}
                 </span>
               </div>
 
@@ -840,16 +836,9 @@ const Dashboard = ({
               >
                 <div
                   className="bg-gradient-to-r from-yellow-400 via-orange-400 to-red-400 h-full rounded-full transition-all duration-1000 ease-out shadow-lg relative"
-                  style={{
-                    width: `${Math.min(
-                      ((stats.monthlyIncome - stats.monthlyExpense) / 10000) *
-                        100,
-                      100
-                    )}%`,
-                    transitionDelay: "1s",
-                  }}
+                  style={{ width: `${progressPct}%`, transitionDelay: "200ms" }}
                 >
-                  <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent rounded-full"></div>
+                  <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent rounded-full" />
                 </div>
               </div>
 
@@ -860,34 +849,18 @@ const Dashboard = ({
                   }`}
                 >
                   {language === "th" ? "ออมได้" : "Saved"}: ฿
-                  {(
-                    stats.monthlyIncome - stats.monthlyExpense
-                  ).toLocaleString()}
+                  {netSaved.toLocaleString()}
                 </div>
                 <div
                   className={`text-sm font-bold px-3 py-1 rounded-full ${
-                    Math.min(
-                      ((stats.monthlyIncome - stats.monthlyExpense) / 10000) *
-                        100,
-                      100
-                    ) >= 80
+                    progressPct >= 80
                       ? "bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 dark:from-green-900/30 dark:to-emerald-900/30 dark:text-green-400"
-                      : Math.min(
-                          ((stats.monthlyIncome - stats.monthlyExpense) /
-                            10000) *
-                            100,
-                          100
-                        ) >= 50
+                      : progressPct >= 50
                       ? "bg-gradient-to-r from-yellow-100 to-orange-100 text-yellow-700 dark:from-yellow-900/30 dark:to-orange-900/30 dark:text-yellow-400"
                       : "bg-gradient-to-r from-red-100 to-pink-100 text-red-700 dark:from-red-900/30 dark:to-pink-900/30 dark:text-red-400"
                   }`}
                 >
-                  {Math.min(
-                    ((stats.monthlyIncome - stats.monthlyExpense) / 10000) *
-                      100,
-                    100
-                  ).toFixed(1)}
-                  %
+                  {progressPct.toFixed(1)}%
                 </div>
               </div>
             </div>
@@ -897,18 +870,13 @@ const Dashboard = ({
                 <div
                   key={i}
                   className={`w-3 h-3 rounded-full transition-all duration-500 ${
-                    i <
-                    Math.floor(
-                      ((stats.monthlyIncome - stats.monthlyExpense) / 10000) * 5
-                    )
+                    i < filledDots
                       ? "bg-gradient-to-r from-yellow-400 to-orange-400 shadow-lg"
                       : theme === "dark"
                       ? "bg-gray-600"
                       : "bg-gray-300"
                   }`}
-                  style={{
-                    transitionDelay: `${i * 100 + 1200}ms`,
-                  }}
+                  style={{ transitionDelay: `${i * 80 + 300}ms` }}
                 />
               ))}
             </div>

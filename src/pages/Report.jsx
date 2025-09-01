@@ -17,25 +17,152 @@ import {
   Info,
 } from "lucide-react";
 
-const Report = ({ transactions }) => {
+const Report = ({ transactions, language = "th" }) => {
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [reportType, setReportType] = useState("monthly");
 
-  const months = [
-    "มกราคม",
-    "กุมภาพันธ์",
-    "มีนาคม",
-    "เมษายน",
-    "พฤษภาคม",
-    "มิถุนายน",
-    "กรกฎาคม",
-    "สิงหาคม",
-    "กันยายน",
-    "ตุลาคม",
-    "พฤศจิกายน",
-    "ธันวาคม",
-  ];
+  // Language-specific content
+  const content = {
+    th: {
+      title: "รายงานการเงิน",
+      subtitle: "วิเคราะห์รายรับ-รายจ่ายของคุณ",
+      refresh: "รีเฟรช",
+      exportPdf: "ส่งออก PDF (ใช้งานไม่ได้)",
+      reportFilter: "ตัวกรองรายงาน",
+      reportType: "ประเภทรายงาน",
+      year: "ปี",
+      month: "เดือน",
+      monthly: "รายเดือน",
+      yearly: "รายปี",
+      all: "ทั้งหมด",
+      totalIncome: "รายรับรวม",
+      totalExpense: "รายจ่ายรวม",
+      netBalance: "คงเหลือสุทธิ",
+      transactionCount: "จำนวนรายการ",
+      savingRate: "อัตราการออม",
+      avgPerTransaction: "เฉลี่ยต่อรายการ",
+      categoryBreakdown: "แยกตามหมวดหมู่",
+      income: "รายรับ",
+      expense: "รายจ่าย",
+      transactions: "รายการ",
+      noCategory: "ไม่ระบุหมวดหมู่",
+      noCategoryData: "ไม่มีข้อมูลหมวดหมู่",
+      trendAnalysis: "แนวโน้มรายวัน",
+      overview: "สรุปภาพรวม",
+      incomeTransactions: "รายการรายรับ",
+      expenseTransactions: "รายการรายจ่าย",
+      financialAdvice: "คำแนะนำการเงิน",
+      financialHealth: {
+        excellent: "สถานะการเงินดีเยี่ยม",
+        good: "สถานะการเงินดี",
+        warning: "ควรเพิ่มการออม",
+        danger: "ควรลดรายจ่าย",
+      },
+      recommendations: {
+        reduceExpense: {
+          title: "ควรลดรายจ่าย",
+          desc: "รายจ่ายเกินรายรับ ควรทบทวนการใช้เงิน",
+        },
+        increaseSaving: {
+          title: "เพิ่มการออม",
+          desc: "ควรออมอย่างน้อย 10% ของรายรับ",
+        },
+        excellent: {
+          title: "ดีเยี่ยม!",
+          desc: "คุณมีการออมที่ดี สามารถพิจารณาลงทุนเพิ่มเติม",
+        },
+        track: {
+          title: "ติดตามอย่างสม่ำเสมอ",
+          desc: "บันทึกรายรับ-รายจ่ายทุกวันเพื่อควบคุมการเงิน",
+        },
+      },
+      months: [
+        "มกราคม",
+        "กุมภาพันธ์",
+        "มีนาคม",
+        "เมษายน",
+        "พฤษภาคม",
+        "มิถุนายน",
+        "กรกฎาคม",
+        "สิงหาคม",
+        "กันยายน",
+        "ตุลาคม",
+        "พฤศจิกายน",
+        "ธันวาคม",
+      ],
+    },
+    en: {
+      title: "Financial Report",
+      subtitle: "Analyze your income and expenses",
+      refresh: "Refresh",
+      exportPdf: "Export PDF (Not Available)",
+      reportFilter: "Report Filter",
+      reportType: "Report Type",
+      year: "Year",
+      month: "Month",
+      monthly: "Monthly",
+      yearly: "Yearly",
+      all: "All",
+      totalIncome: "Total Income",
+      totalExpense: "Total Expense",
+      netBalance: "Net Balance",
+      transactionCount: "Transaction Count",
+      savingRate: "Saving Rate",
+      avgPerTransaction: "Avg per Transaction",
+      categoryBreakdown: "Category Breakdown",
+      income: "Income",
+      expense: "Expense",
+      transactions: "Transactions",
+      noCategory: "No Category",
+      noCategoryData: "No category data",
+      trendAnalysis: "Daily Trend",
+      overview: "Overview",
+      incomeTransactions: "Income Transactions",
+      expenseTransactions: "Expense Transactions",
+      financialAdvice: "Financial Advice",
+      financialHealth: {
+        excellent: "Excellent Financial Status",
+        good: "Good Financial Status",
+        warning: "Should Increase Savings",
+        danger: "Should Reduce Expenses",
+      },
+      recommendations: {
+        reduceExpense: {
+          title: "Reduce Expenses",
+          desc: "Expenses exceed income, should review spending habits",
+        },
+        increaseSaving: {
+          title: "Increase Savings",
+          desc: "Should save at least 10% of income",
+        },
+        excellent: {
+          title: "Excellent!",
+          desc: "You have good savings, consider additional investments",
+        },
+        track: {
+          title: "Track Regularly",
+          desc: "Record income and expenses daily to control finances",
+        },
+      },
+      months: [
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December",
+      ],
+    },
+  };
+
+  const t = content[language] || content.th;
 
   // Calculate report data
   const reportData = useMemo(() => {
@@ -67,7 +194,7 @@ const Report = ({ transactions }) => {
     // Category breakdown
     const categoryData = {};
     filteredTransactions.forEach((transaction) => {
-      const category = transaction.category || "ไม่ระบุหมวดหมู่";
+      const category = transaction.category || t.noCategory;
       if (!categoryData[category]) {
         categoryData[category] = { income: 0, expense: 0, count: 0 };
       }
@@ -102,26 +229,26 @@ const Report = ({ transactions }) => {
       dailyData,
       transactionCount: filteredTransactions.length,
     };
-  }, [transactions, selectedMonth, selectedYear, reportType]);
+  }, [transactions, selectedMonth, selectedYear, reportType, t.noCategory]);
 
   // Summary cards data
   const summaryCards = [
     {
-      title: "รายรับรวม",
+      title: t.totalIncome,
       amount: reportData.income,
       icon: TrendingUp,
       color: "from-green-500 to-green-400",
       textColor: "text-green-600",
     },
     {
-      title: "รายจ่ายรวม",
+      title: t.totalExpense,
       amount: reportData.expense,
       icon: TrendingDown,
       color: "from-red-500 to-red-400",
       textColor: "text-red-600",
     },
     {
-      title: "คงเหลือสุทธิ",
+      title: t.netBalance,
       amount: reportData.balance,
       icon: DollarSign,
       color:
@@ -131,7 +258,7 @@ const Report = ({ transactions }) => {
       textColor: reportData.balance >= 0 ? "text-blue-600" : "text-red-600",
     },
     {
-      title: "จำนวนรายการ",
+      title: t.transactionCount,
       amount: reportData.transactionCount,
       icon: Activity,
       color: "from-purple-500 to-purple-400",
@@ -152,34 +279,34 @@ const Report = ({ transactions }) => {
         status: "excellent",
         color: "text-green-600",
         icon: CheckCircle,
-        message: "สถานะการเงินดีเยี่ยม",
+        message: t.financialHealth.excellent,
       };
     } else if (savingRate >= 10) {
       return {
         status: "good",
         color: "text-blue-600",
         icon: Info,
-        message: "สถานะการเงินดี",
+        message: t.financialHealth.good,
       };
     } else if (savingRate >= 0) {
       return {
         status: "warning",
         color: "text-yellow-600",
         icon: AlertTriangle,
-        message: "ควรเพิ่มการออม",
+        message: t.financialHealth.warning,
       };
     } else {
       return {
         status: "danger",
         color: "text-red-600",
         icon: AlertTriangle,
-        message: "ควรลดรายจ่าย",
+        message: t.financialHealth.danger,
       };
     }
   };
 
   const handleRefresh = () => {
-    // วิธีง่ายๆ: รีเซ็ต state ของ transactions หรือแค่ trigger useMemo ใหม่
+    // Simple way: reset state of transactions or just trigger useMemo again
     setSelectedMonth((prev) => prev); // trigger useMemo
     setSelectedYear((prev) => prev);
     setReportType((prev) => prev);
@@ -193,9 +320,9 @@ const Report = ({ transactions }) => {
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
         <div>
           <h1 className="text-4xl font-bold bg-gradient-to-r from-red-600 to-red-400 bg-clip-text text-transparent">
-            รายงานการเงิน
+            {t.title}
           </h1>
-          <p className="text-gray-600 mt-2">วิเคราะห์รายรับ-รายจ่ายของคุณ</p>
+          <p className="text-gray-600 mt-2">{t.subtitle}</p>
         </div>
 
         <div className="flex items-center gap-3">
@@ -204,12 +331,8 @@ const Report = ({ transactions }) => {
             onClick={handleRefresh}
           >
             <RefreshCw size={18} />
-            รีเฟรช
+            {t.refresh}
           </button>
-          {/* <button className="flex items-center gap-2 px-4 py-2 bg-gray-500 text-green-700 rounded-xl hover:bg-gray-200 transition-colors">
-            <Download size={18} />
-            ส่งออก PDF (ใช้งานไม่ได้)
-          </button> */}
         </div>
       </div>
 
@@ -217,28 +340,32 @@ const Report = ({ transactions }) => {
       <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg">
         <div className="flex items-center gap-4 mb-6">
           <Filter className="text-red-500" size={24} />
-          <h2 className="text-xl font-semibold text-gray-800">ตัวกรองรายงาน</h2>
+          <h2 className="text-xl font-semibold text-gray-800">
+            {t.reportFilter}
+          </h2>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
             <label className="block text-gray-700 font-medium mb-2">
-              ประเภทรายงาน
+              {t.reportType}
             </label>
             <select
               value={reportType}
               onChange={(e) => setReportType(e.target.value)}
               className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-red-400 focus:ring-2 focus:ring-red-100 outline-none bg-white/50 transition-all text-black"
             >
-              <option value="monthly">รายเดือน</option>
-              <option value="yearly">รายปี</option>
-              <option value="all">ทั้งหมด</option>
+              <option value="monthly">{t.monthly}</option>
+              <option value="yearly">{t.yearly}</option>
+              <option value="all">{t.all}</option>
             </select>
           </div>
 
           {reportType !== "all" && (
             <div>
-              <label className="block text-gray-700 font-medium mb-2">ปี</label>
+              <label className="block text-gray-700 font-medium mb-2">
+                {t.year}
+              </label>
               <select
                 value={selectedYear}
                 onChange={(e) => setSelectedYear(parseInt(e.target.value))}
@@ -249,7 +376,7 @@ const Report = ({ transactions }) => {
                   (_, i) => new Date().getFullYear() - i
                 ).map((year) => (
                   <option key={year} value={year}>
-                    {year + 543}
+                    {language === "th" ? year + 543 : year}
                   </option>
                 ))}
               </select>
@@ -259,14 +386,14 @@ const Report = ({ transactions }) => {
           {reportType === "monthly" && (
             <div>
               <label className="block text-gray-700 font-medium mb-2">
-                เดือน
+                {t.month}
               </label>
               <select
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-red-400 focus:ring-2 focus:ring-red-100 outline-none bg-white/50 transition-all text-black"
               >
-                {months.map((month, index) => (
+                {t.months.map((month, index) => (
                   <option key={index} value={index}>
                     {month}
                   </option>
@@ -316,7 +443,9 @@ const Report = ({ transactions }) => {
                   <div className={`text-2xl font-bold ${card.textColor}`}>
                     {card.isCount
                       ? card.amount
-                      : `฿${card.amount.toLocaleString()}`}
+                      : `${
+                          language === "th" ? "฿" : "$"
+                        }${card.amount.toLocaleString()}`}
                   </div>
                 </div>
               </div>
@@ -324,8 +453,8 @@ const Report = ({ transactions }) => {
               {!card.isCount && (
                 <div className="mt-4 pt-4 border-t border-gray-100">
                   <div className="text-xs text-gray-500">
-                    {card.title === "คงเหลือสุทธิ"
-                      ? `อัตราการออม: ${
+                    {card.title === t.netBalance
+                      ? `${t.savingRate}: ${
                           reportData.income > 0
                             ? (
                                 (reportData.balance / reportData.income) *
@@ -333,8 +462,10 @@ const Report = ({ transactions }) => {
                               ).toFixed(1)
                             : "0"
                         }%`
-                      : `เฉลี่ยต่อรายการ: ฿${
-                          card.title === "รายรับรวม"
+                      : `${t.avgPerTransaction}: ${
+                          language === "th" ? "฿" : "$"
+                        }${
+                          card.title === t.totalIncome
                             ? reportData.filteredTransactions.filter(
                                 (t) => t.type === "income"
                               ).length > 0
@@ -370,7 +501,7 @@ const Report = ({ transactions }) => {
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg">
           <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
             <PieChart className="text-red-500" size={24} />
-            แยกตามหมวดหมู่
+            {t.categoryBreakdown}
           </h3>
 
           <div className="space-y-4 max-h-80 overflow-y-auto">
@@ -399,21 +530,23 @@ const Report = ({ transactions }) => {
                   <div className="grid grid-cols-3 gap-2 text-sm">
                     <div className="text-center">
                       <div className="text-green-600 font-semibold">
-                        ฿{data.income.toLocaleString()}
+                        {language === "th" ? "฿" : "$"}
+                        {data.income.toLocaleString()}
                       </div>
-                      <div className="text-gray-500">รายรับ</div>
+                      <div className="text-gray-500">{t.income}</div>
                     </div>
                     <div className="text-center">
                       <div className="text-red-600 font-semibold">
-                        ฿{data.expense.toLocaleString()}
+                        {language === "th" ? "฿" : "$"}
+                        {data.expense.toLocaleString()}
                       </div>
-                      <div className="text-gray-500">รายจ่าย</div>
+                      <div className="text-gray-500">{t.expense}</div>
                     </div>
                     <div className="text-center">
                       <div className="text-blue-600 font-semibold">
                         {data.count}
                       </div>
-                      <div className="text-gray-500">รายการ</div>
+                      <div className="text-gray-500">{t.transactions}</div>
                     </div>
                   </div>
 
@@ -431,7 +564,7 @@ const Report = ({ transactions }) => {
             {Object.keys(reportData.categoryData).length === 0 && (
               <div className="text-center py-8">
                 <PieChart className="mx-auto text-gray-400 mb-2" size={32} />
-                <p className="text-gray-500">ไม่มีข้อมูลหมวดหมู่</p>
+                <p className="text-gray-500">{t.noCategoryData}</p>
               </div>
             )}
           </div>
@@ -441,7 +574,7 @@ const Report = ({ transactions }) => {
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg">
           <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
             <BarChart2 className="text-red-500" size={24} />
-            {reportType === "monthly" ? "แนวโน้มรายวัน" : "สรุปภาพรวม"}
+            {reportType === "monthly" ? t.trendAnalysis : t.overview}
           </h3>
 
           {reportType === "monthly" &&
@@ -464,10 +597,12 @@ const Report = ({ transactions }) => {
                       <div className="flex-1">
                         <div className="flex justify-between text-sm mb-1">
                           <span className="text-green-600">
-                            ฿{data.income.toLocaleString()}
+                            {language === "th" ? "฿" : "$"}
+                            {data.income.toLocaleString()}
                           </span>
                           <span className="text-red-600">
-                            ฿{data.expense.toLocaleString()}
+                            {language === "th" ? "฿" : "$"}
+                            {data.expense.toLocaleString()}
                           </span>
                         </div>
                         <div className="w-full bg-gray-200 rounded-full h-2">
@@ -488,7 +623,8 @@ const Report = ({ transactions }) => {
                           dayBalance >= 0 ? "text-blue-600" : "text-red-600"
                         }`}
                       >
-                        {dayBalance >= 0 ? "+" : ""}฿
+                        {dayBalance >= 0 ? "+" : ""}
+                        {language === "th" ? "฿" : "$"}
                         {dayBalance.toLocaleString()}
                       </div>
                     </div>
@@ -506,7 +642,9 @@ const Report = ({ transactions }) => {
                       ).length
                     }
                   </div>
-                  <div className="text-sm text-gray-600">รายการรายรับ</div>
+                  <div className="text-sm text-gray-600">
+                    {t.incomeTransactions}
+                  </div>
                 </div>
                 <div className="text-center p-4 rounded-xl bg-red-50 border border-red-200">
                   <div className="text-2xl font-bold text-red-600">
@@ -516,14 +654,16 @@ const Report = ({ transactions }) => {
                       ).length
                     }
                   </div>
-                  <div className="text-sm text-gray-600">รายการรายจ่าย</div>
+                  <div className="text-sm text-gray-600">
+                    {t.expenseTransactions}
+                  </div>
                 </div>
               </div>
 
               <div className="p-4 rounded-xl bg-blue-50 border border-blue-200">
                 <div className="text-center">
                   <div className="text-lg font-semibold text-blue-800 mb-2">
-                    อัตราการออม
+                    {t.savingRate}
                   </div>
                   <div className="text-3xl font-bold text-blue-600">
                     {reportData.income > 0
@@ -561,7 +701,7 @@ const Report = ({ transactions }) => {
       <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-6 shadow-lg border border-purple-100">
         <h3 className="text-xl font-semibold text-purple-800 mb-4 flex items-center gap-2">
           <Target className="text-purple-600" size={24} />
-          คำแนะนำการเงิน
+          {t.financialAdvice}
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -572,9 +712,11 @@ const Report = ({ transactions }) => {
                 size={20}
               />
               <div>
-                <div className="font-medium text-red-800">ควรลดรายจ่าย</div>
+                <div className="font-medium text-red-800">
+                  {t.recommendations.reduceExpense.title}
+                </div>
                 <div className="text-sm text-red-600 mt-1">
-                  รายจ่ายเกินรายรับ ควรทบทวนการใช้เงิน
+                  {t.recommendations.reduceExpense.desc}
                 </div>
               </div>
             </div>
@@ -588,9 +730,11 @@ const Report = ({ transactions }) => {
                   size={20}
                 />
                 <div>
-                  <div className="font-medium text-yellow-800">เพิ่มการออม</div>
+                  <div className="font-medium text-yellow-800">
+                    {t.recommendations.increaseSaving.title}
+                  </div>
                   <div className="text-sm text-yellow-600 mt-1">
-                    ควรออมอย่างน้อย 10% ของรายรับ
+                    {t.recommendations.increaseSaving.desc}
                   </div>
                 </div>
               </div>
@@ -604,9 +748,11 @@ const Report = ({ transactions }) => {
                   size={20}
                 />
                 <div>
-                  <div className="font-medium text-green-800">ดีเยี่ยม!</div>
+                  <div className="font-medium text-green-800">
+                    {t.recommendations.excellent.title}
+                  </div>
                   <div className="text-sm text-green-600 mt-1">
-                    คุณมีการออมที่ดี สามารถพิจารณาลงทุนเพิ่มเติม
+                    {t.recommendations.excellent.desc}
                   </div>
                 </div>
               </div>
@@ -616,10 +762,10 @@ const Report = ({ transactions }) => {
             <Info className="text-blue-500 flex-shrink-0 mt-1" size={20} />
             <div>
               <div className="font-medium text-blue-800">
-                ติดตามอย่างสม่ำเสมอ
+                {t.recommendations.track.title}
               </div>
               <div className="text-sm text-blue-600 mt-1">
-                บันทึกรายรับ-รายจ่ายทุกวันเพื่อควบคุมการเงิน
+                {t.recommendations.track.desc}
               </div>
             </div>
           </div>

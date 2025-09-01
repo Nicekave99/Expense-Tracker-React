@@ -1,14 +1,10 @@
-// components/Header.jsx - Updated with User Profile & Authentication
+// components/Header.jsx - Updated with PhotoURL avatar + safe fallback
 import React, { useState, useRef, useEffect } from "react";
 import {
   Menu,
-  Bell,
   Search,
-  Sun,
-  Moon,
-  Globe,
   ChevronDown,
-  Settings,
+  Settings as SettingsIcon,
   Check,
   X,
   AlertCircle,
@@ -20,11 +16,53 @@ import {
   LogOut,
   Shield,
   Mail,
-  Edit3,
-  Eye,
-  EyeOff,
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
+
+/** Helpers */
+const getInitial = (userProfile, currentUser) => {
+  const name =
+    userProfile?.displayName?.trim() ||
+    currentUser?.displayName?.trim() ||
+    currentUser?.email?.trim() ||
+    "";
+  return name ? name.charAt(0).toUpperCase() : "U";
+};
+
+/** Avatar component: แสดงรูปถ้ามี photoURL, ถ้า error หรือไม่มี → แสดงวงกลมตัวอักษรย่อ */
+const Avatar = ({
+  src,
+  fallbackText = "U",
+  sizeClass = "w-8 h-8",
+  theme = "light",
+  className = "",
+  alt = "avatar",
+}) => {
+  const [imgErr, setImgErr] = useState(false);
+  const showImg = src && !imgErr;
+
+  if (showImg) {
+    return (
+      <img
+        src={src}
+        onError={() => setImgErr(true)}
+        alt={alt}
+        className={`${sizeClass} rounded-full object-cover border ${
+          theme === "dark" ? "border-gray-700" : "border-gray-200"
+        } ${className}`}
+      />
+    );
+  }
+
+  return (
+    <div
+      className={`${sizeClass} bg-gradient-to-r from-red-500 to-red-400 rounded-full flex items-center justify-center text-white font-semibold ${className}`}
+      aria-label="avatar-fallback"
+    >
+      {fallbackText}
+    </div>
+  );
+};
 
 const Header = ({
   isMobileOpen,
@@ -35,6 +73,7 @@ const Header = ({
   currentPage,
   currentUser,
   userProfile,
+  setCurrentPage,
 }) => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -63,7 +102,7 @@ const Header = ({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Sample notifications data
+  // Sample notifications data (เดิม)
   const notifications = [
     {
       id: 1,
@@ -96,11 +135,6 @@ const Header = ({
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
-  const handleSearch = () => {
-    console.log("Searching:", query);
-    // TODO: เพิ่ม logic ค้นหาจริงๆ ตรงนี้
-  };
-
   const handleLogout = async () => {
     if (
       window.confirm(
@@ -119,20 +153,11 @@ const Header = ({
   const currentDate = new Date();
   const formattedDate = currentDate.toLocaleDateString(
     language === "th" ? "th-TH" : "en-US",
-    {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      weekday: "long",
-    }
+    { year: "numeric", month: "long", day: "numeric", weekday: "long" }
   );
-
   const currentTime = currentDate.toLocaleTimeString(
     language === "th" ? "th-TH" : "en-US",
-    {
-      hour: "2-digit",
-      minute: "2-digit",
-    }
+    { hour: "2-digit", minute: "2-digit" }
   );
 
   const getPageTitle = () => {
@@ -182,6 +207,9 @@ const Header = ({
     }
   };
 
+  const avatarURL = userProfile?.photoURL || currentUser?.photoURL || "";
+  const avatarInitial = getInitial(userProfile, currentUser);
+
   return (
     <header className={`fixed top-0 left-0 right-0 lg:ml-80 z-20`}>
       <div
@@ -211,9 +239,7 @@ const Header = ({
 
               {/* Page Title */}
               <div className="hidden sm:block">
-                <h2
-                  className={`text-xl font-bold bg-gradient-to-r from-red-600 to-red-400 bg-clip-text text-transparent`}
-                >
+                <h2 className="text-xl font-bold bg-gradient-to-r from-red-600 to-red-400 bg-clip-text text-transparent">
                   {getPageTitle()}
                 </h2>
                 <p
@@ -235,7 +261,7 @@ const Header = ({
                   }`}
                 >
                   <TrendingUp className="text-green-600" size={16} />
-                  <span className={`text-sm font-medium text-green-500 `}>
+                  <span className={`text-sm font-medium text-green-500`}>
                     ฿ {totals.income?.toLocaleString() || "0"}
                   </span>
                 </div>
@@ -256,7 +282,9 @@ const Header = ({
                 >
                   <span
                     className={`text-sm font-medium ${
-                      totals.balance >= 0 ? "text-blue-600" : "text-red-600"
+                      (totals.balance || 0) >= 0
+                        ? "text-blue-600"
+                        : "text-red-600"
                     }`}
                   >
                     ฿ {Math.abs(totals.balance || 0).toLocaleString()}
@@ -287,7 +315,7 @@ const Header = ({
                 </div>
               </div>
 
-              {/* Search Button (Mobile) */}
+              {/* Search Button (Mobile)
               <button
                 onClick={() => setShowSearch(!showSearch)}
                 className={`md:hidden p-2 rounded-xl ${
@@ -299,7 +327,7 @@ const Header = ({
                 }`}
               >
                 <Search size={20} />
-              </button>
+              </button> */}
 
               {/* User Profile Menu */}
               <div className="relative" ref={userMenuRef}>
@@ -311,11 +339,14 @@ const Header = ({
                       : "hover:bg-gray-100 text-gray-600 border-gray-200 hover:border-gray-300"
                   } transition-all duration-300 border`}
                 >
-                  <div className="w-8 h-8 bg-gradient-to-r from-red-500 to-red-400 rounded-full flex items-center justify-center text-white text-sm font-semibold">
-                    {userProfile?.displayName?.charAt(0)?.toUpperCase() ||
-                      currentUser?.email?.charAt(0)?.toUpperCase() ||
-                      "U"}
-                  </div>
+                  {/* ✅ แทนที่วงกลมตัวอักษรด้วย Avatar (ใช้ photoURL ถ้ามี) */}
+                  <Avatar
+                    src={avatarURL}
+                    fallbackText={avatarInitial}
+                    sizeClass="w-8 h-8"
+                    theme={theme}
+                  />
+
                   <div className="hidden md:block text-left">
                     <div
                       className={`text-sm font-medium ${
@@ -356,11 +387,13 @@ const Header = ({
                       }`}
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 bg-gradient-to-r from-red-500 to-red-400 rounded-full flex items-center justify-center text-white text-lg font-semibold">
-                          {userProfile?.displayName?.charAt(0)?.toUpperCase() ||
-                            currentUser?.email?.charAt(0)?.toUpperCase() ||
-                            "U"}
-                        </div>
+                        {/* ✅ ใช้ Avatar ขนาดใหญ่ใน dropdown */}
+                        <Avatar
+                          src={avatarURL}
+                          fallbackText={avatarInitial}
+                          sizeClass="w-12 h-12"
+                          theme={theme}
+                        />
                         <div>
                           <div
                             className={`font-medium ${
@@ -410,8 +443,7 @@ const Header = ({
                       <button
                         onClick={() => {
                           setShowUserMenu(false);
-                          // Navigate to profile page
-                          window.location.hash = "profile";
+                          setCurrentPage && setCurrentPage("profile");
                         }}
                         className={`w-full flex items-center gap-3 px-4 py-3 ${
                           theme === "dark"
@@ -426,8 +458,7 @@ const Header = ({
                       <button
                         onClick={() => {
                           setShowUserMenu(false);
-                          // Navigate to settings page
-                          window.location.hash = "settings";
+                          setCurrentPage && setCurrentPage("settings");
                         }}
                         className={`w-full flex items-center gap-3 px-4 py-3 ${
                           theme === "dark"
@@ -435,7 +466,7 @@ const Header = ({
                             : "hover:bg-gray-50 text-gray-700"
                         } transition-colors`}
                       >
-                        <Settings size={18} />
+                        <SettingsIcon size={18} />
                         <span>
                           {language === "th" ? "การตั้งค่า" : "Settings"}
                         </span>
@@ -465,7 +496,7 @@ const Header = ({
           </div>
         </div>
 
-        {/* Mobile Search Bar */}
+        {/* Mobile Search Bar
         {showSearch && (
           <div className="md:hidden px-6 pb-4">
             <div className="relative">
@@ -493,7 +524,7 @@ const Header = ({
               />
             </div>
           </div>
-        )}
+        )} */}
       </div>
     </header>
   );
